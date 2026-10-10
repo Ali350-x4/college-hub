@@ -2,58 +2,71 @@
 <html lang="ar" dir="rtl"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="robots" content="noindex,nofollow"><title>Admin</title><link rel="icon" href="../icon.svg">
-<link rel="stylesheet" href="../style.css?v=3"><script src="../ui.js?v=3" defer></script>
+<link rel="stylesheet" href="../style.css?v=4"><script src="../ui.js?v=4" defer></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
-<script>addEventListener("error",e=>{var a=document.getElementById("app");if(a)a.innerHTML="<pre style=\"white-space:pre-wrap;padding:16px;color:#c0392b\">"+String(e.message).replace(/</g,"&lt;")+"</pre>"});</script></head><body><div class="wrap" id="app"></div><div id="toast"></div>
+<script>addEventListener("error",e=>{var a=document.getElementById("app");if(a)a.innerHTML="<pre style=\"white-space:pre-wrap;padding:16px;color:#c0392b\">"+String(e.message).replace(/</g,"&lt;")+"</pre>"});</script>
+</head><body><div class="wrap" id="app"></div><div id="toast"></div>
 <script>
-const SB=supabase.createClient("https://myjirhvkucbkfjuowewe.supabase.co","eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im15amlyaHZrdWNia2ZqdW93ZXdlIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODY4NzQ5NjAsImV4cCI6MjEwMjQ1MDk2MH0.67yCEJgsu_8i_mausJaR6kweLQtxmvehkvFD4b5wI54");
+const URL_="https://myjirhvkucbkfjuowewe.supabase.co",KEY="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im15amlyaHZrdWNia2ZqdW93ZXdlIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODY4NzQ5NjAsImV4cCI6MjEwMjQ1MDk2MH0.67yCEJgsu_8i_mausJaR6kweLQtxmvehkvFD4b5wI54";
+const SB=supabase.createClient(URL_,KEY);
 const FOL=[["محاضرات","Lectures","🎓"],["سكاشن","Sections","🧪"],["سلايدات","Slides","🖼️"],["بنوك أسئلة","Question banks","❓"]];
 const esc=s=>String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
-const $=i=>document.getElementById(i),v=i=>$(i).value.trim();
-const toast=m=>{$("toast").innerHTML="<span>"+esc(m)+"</span>";setTimeout(()=>$("toast").innerHTML="",2600)};
-const app=$("app");
-(function th(){const r=document.documentElement;const m=localStorage.theme||"system";m!=="system"&&r.setAttribute("data-theme",m)})();
+const $=i=>document.getElementById(i),v=i=>$(i).value.trim(),app=$("app");
+const toast=m=>{$("toast").innerHTML="<span>"+esc(m)+"</span>";setTimeout(()=>$("toast").innerHTML="",2800)};
+(function(){const m=localStorage.theme||"system";m!=="system"&&document.documentElement.setAttribute("data-theme",m)})();
 function loginForm(msg){app.innerHTML=`<h2>⚙️ لوحة الأدمن</h2><div class="raised card"><input id="e" type="email" placeholder="الإيميل" autocomplete="username"><input id="p" type="password" placeholder="الباسورد" autocomplete="current-password"><button class="p" onclick="login(v('e'),v('p'))">دخول</button>${msg?`<p class="mu">${esc(msg)}</p>`:""}</div>`}
 async function login(e,p){const {error}=await SB.auth.signInWithPassword({email:e,password:p});if(error)return loginForm("بيانات الدخول غلط");
  const {data}=await SB.rpc("is_admin");if(!data){await SB.auth.signOut();return loginForm("الحساب ده مش أدمن")}panel()}
-async function init(){
- const h=new URLSearchParams(location.hash.slice(1));
+async function init(){const h=new URLSearchParams(location.hash.slice(1));
  if(h.get("e")&&h.get("p")){const e=h.get("e"),p=h.get("p");history.replaceState(null,"",location.pathname);return login(e,p)}
  const {data}=await SB.auth.getSession();if(data.session){const a=await SB.rpc("is_admin");if(a.data)return panel()}loginForm()}
+const ok=async p=>{const r=await p;if(r.error){toast("خطأ: "+r.error.message);return false}return true};
 async function panel(){
- const q=(n,o)=>SB.from(n).select("*").order(o,{ascending:o==="position"});
- const [s,f,fi,an,sc,rp,rq]=await Promise.all([q("subjects","position"),q("folders","position"),q("files","created_at"),q("announcements","created_at"),q("schedule","position"),q("reports","created_at"),q("requests","created_at")]);
- const S=s.data||[],F=f.data||[],FI=fi.data||[];
+ const q=(n,o,asc)=>SB.from(n).select("*").order(o,{ascending:!!asc});
+ const [s,f,fi,an,sc,rp,rq]=await Promise.all([q("subjects","position",1),q("folders","position",1),q("files","created_at"),q("announcements","created_at"),q("schedule","position",1),q("reports","created_at"),q("requests","created_at")]);
+ const S=s.data||[],F=f.data||[],FI=fi.data||[],dls=FI.reduce((a,x)=>a+x.downloads,0),topf=[...FI].sort((a,b)=>b.downloads-a.downloads).slice(0,5).filter(x=>x.downloads>0);
  const fo=F.map(x=>`<option value="${x.id}">${esc((S.find(y=>y.id===x.subject_id)||{}).name_ar)} / ${esc(x.name_ar)}</option>`).join("");
  const so=S.map(x=>`<option value="${x.id}">${esc(x.name_ar)}</option>`).join("");
+ const ud=(tb,id,pid)=>`<button class="sm" onclick="mv('${tb}','${id}',-1,'${pid||""}')">▲</button><button class="sm" onclick="mv('${tb}','${id}',1,'${pid||""}')">▼</button>`;
  app.innerHTML=`<header><h1>⚙️ لوحة الأدمن</h1><button onclick="SB.auth.signOut().then(()=>loginForm())">خروج</button></header>
+<div class="sg"><div><b>${S.length}</b>مواد</div><div><b>${FI.length}</b>ملفات</div><div><b>${dls}</b>تحميلات</div></div>
+${topf.length?`<h2>🔥 الأكثر تحميلاً</h2>${topf.map(x=>`<div class="raised row"><span class="n">📄 ${esc(x.name)}</span><b>⬇ ${x.downloads}</b></div>`).join("")}`:""}
+<h2>📤 رفع ملفات</h2><div class="raised card"><select id="uf">${fo}</select><div class="dz" id="dz">⬆️ اسحب الملفات هنا أو اضغط للاختيار</div><input id="uff" type="file" multiple hidden><div id="ups"></div></div>
+<h2>المواد والفولدرات</h2>${S.map(x=>`<div class="raised card" style="margin:10px 0"><div class="row" style="padding:0;margin:0"><b class="n">${esc(x.icon)} ${esc(x.name_ar)} / ${esc(x.name_en)}</b>${ud("subjects",x.id)}<button class="sm" onclick="ren('subjects','${x.id}')">✎</button><button class="x sm" onclick="del('subjects','${x.id}')">🗑</button></div>
+${F.filter(y=>y.subject_id===x.id).map(y=>`<div class="row"><span class="n">${esc(y.icon)} ${esc(y.name_ar)} / ${esc(y.name_en)} <span class="mu">(${FI.filter(z=>z.folder_id===y.id).length})</span></span>${ud("folders",y.id,x.id)}<button class="sm" onclick="ren('folders','${y.id}')">✎</button><button class="x sm" onclick="del('folders','${y.id}')">🗑</button></div>`).join("")}</div>`).join("")}
 <div class="raised card"><b>إضافة مادة</b><input id="sa" placeholder="الاسم بالعربي"><input id="se" placeholder="الاسم بالإنجليزي"><input id="si" placeholder="إيموجي (اختياري)" maxlength="4"><button class="p" onclick="addS()">إضافة (مع 4 فولدرات جاهزة)</button></div>
-<div class="raised card" style="margin-top:14px"><b>إضافة فولدر</b><select id="fs">${so}</select><input id="fa" placeholder="الاسم بالعربي"><input id="fe" placeholder="الاسم بالإنجليزي"><button class="p" onclick="addF()">إضافة</button></div>
-<div class="raised card" style="margin-top:14px"><b>رفع ملفات</b><select id="uf">${fo}</select><input id="ufile" type="file" multiple><button class="p" id="ub" onclick="upl()">رفع</button></div>
-<div class="raised card" style="margin-top:14px"><b>نشر إعلان</b><input id="aa" placeholder="النص بالعربي"><input id="ae" placeholder="النص بالإنجليزي"><button class="p" onclick="addA()">نشر</button></div>
-<div class="raised card" style="margin-top:14px"><b>إضافة للجدول</b><input id="cd" placeholder="اليوم"><input id="ct" placeholder="الوقت"><input id="cs" placeholder="المادة"><input id="cp" placeholder="المكان"><button class="p" onclick="addC()">إضافة</button></div>
-<h2>المواد والفولدرات</h2>${S.map(x=>`<div class="raised card" style="margin:10px 0"><div class="row" style="padding:0"><b class="n">${esc(x.icon)} ${esc(x.name_ar)} / ${esc(x.name_en)}</b><button onclick="ren('subjects','${x.id}')">تعديل</button><button class="x" onclick="del('subjects','${x.id}')">حذف</button></div>
-${F.filter(y=>y.subject_id===x.id).map(y=>`<div class="row"><span class="n">${esc(y.icon)} ${esc(y.name_ar)} / ${esc(y.name_en)} <span class="mu">(${FI.filter(z=>z.folder_id===y.id).length})</span></span><button onclick="ren('folders','${y.id}')">تعديل</button><button class="x" onclick="del('folders','${y.id}')">حذف</button></div>`).join("")}</div>`).join("")}
-<h2>الملفات</h2>${FI.slice().reverse().map(x=>`<div class="raised row"><span class="n">📄 ${esc(x.name)} <span class="mu">⬇ ${x.downloads}</span></span><button class="x" onclick="delFile('${x.id}','${esc(x.path)}')">حذف</button></div>`).join("")||`<p class="mu">لا يوجد</p>`}
-<h2>الإعلانات</h2>${(an.data||[]).map(x=>`<div class="raised row"><span class="n">${esc(x.text_ar)}</span><button class="x" onclick="del('announcements','${x.id}')">حذف</button></div>`).join("")}
-<h2>الجدول</h2>${(sc.data||[]).map(x=>`<div class="raised row"><span class="n">${esc(x.day)} ${esc(x.time)} - ${esc(x.subject)} (${esc(x.place)})</span><button class="x" onclick="del('schedule','${x.id}')">حذف</button></div>`).join("")}
-<h2>البلاغات</h2>${(rp.data||[]).map(x=>`<div class="raised row"><span class="n">${esc((FI.find(y=>y.id===x.file_id)||{name:"?"}).name)}: ${esc(x.message)}</span><button class="x" onclick="del('reports','${x.id}')">حذف</button></div>`).join("")||`<p class="mu">لا يوجد</p>`}
-<h2>طلبات الملفات</h2>${(rq.data||[]).map(x=>`<div class="raised row"><span class="n">${esc(x.message)}</span><button class="x" onclick="del('requests','${x.id}')">حذف</button></div>`).join("")||`<p class="mu">لا يوجد</p>`}`}
-const ok=async(p)=>{const r=await p;if(r.error){toast("خطأ: "+r.error.message);return false}return true};
+<div class="raised card" style="margin-top:12px"><b>إضافة فولدر</b><select id="fs">${so}</select><input id="fa" placeholder="الاسم بالعربي"><input id="fe" placeholder="الاسم بالإنجليزي"><button class="p" onclick="addF()">إضافة</button></div>
+<div class="raised card" style="margin-top:12px"><b>نشر إعلان</b><input id="aa" placeholder="النص بالعربي"><input id="ae" placeholder="النص بالإنجليزي"><button class="p" onclick="addA()">نشر</button></div>
+<div class="raised card" style="margin-top:12px"><b>إضافة للجدول</b><input id="cd" placeholder="اليوم"><input id="ct" placeholder="الوقت"><input id="cs" placeholder="المادة"><input id="cp" placeholder="المكان"><button class="p" onclick="addC()">إضافة</button></div>
+<h2>الملفات</h2>${FI.slice().reverse().map(x=>`<div class="raised row"><span class="n">📄 ${esc(x.name)} <span class="mu">⬇ ${x.downloads}</span></span><button class="x sm" onclick="delFile('${x.id}','${esc(x.path)}')">🗑</button></div>`).join("")||`<p class="mu">لا يوجد</p>`}
+<h2>الإعلانات</h2>${(an.data||[]).map(x=>`<div class="raised row"><span class="n">${esc(x.text_ar)}</span><button class="x sm" onclick="del('announcements','${x.id}')">🗑</button></div>`).join("")}
+<h2>الجدول</h2>${(sc.data||[]).map(x=>`<div class="raised row"><span class="n">${esc(x.day)} ${esc(x.time)} - ${esc(x.subject)} (${esc(x.place)})</span><button class="x sm" onclick="del('schedule','${x.id}')">🗑</button></div>`).join("")}
+<h2>البلاغات</h2>${(rp.data||[]).map(x=>`<div class="raised row"><span class="n">${esc((FI.find(y=>y.id===x.file_id)||{name:"?"}).name)}: ${esc(x.message)}</span><button class="x sm" onclick="del('reports','${x.id}')">🗑</button></div>`).join("")||`<p class="mu">لا يوجد</p>`}
+<h2>طلبات الملفات</h2>${(rq.data||[]).map(x=>`<div class="raised row"><span class="n">${esc(x.message)}</span><button class="x sm" onclick="del('requests','${x.id}')">🗑</button></div>`).join("")||`<p class="mu">لا يوجد</p>`}`;
+ const dz=$("dz"),inp=$("uff");dz.onclick=()=>inp.click();inp.onchange=()=>{up([...inp.files]);inp.value=""};
+ ["dragenter","dragover"].forEach(n=>dz.addEventListener(n,e=>{e.preventDefault();dz.classList.add("on")}));
+ ["dragleave","drop"].forEach(n=>dz.addEventListener(n,e=>{e.preventDefault();dz.classList.remove("on")}));
+ dz.addEventListener("drop",e=>up([...e.dataTransfer.files]))}
+function up1(f,fid,i){return new Promise(async res=>{const row=$("u"+i),pg=row.querySelector(".pg"),path=crypto.randomUUID()+"-"+f.name.replace(/[^\w.\-]+/g,"_");
+ const tok=(await SB.auth.getSession()).data.session.access_token,fd=new FormData();fd.append("cacheControl","3600");fd.append("",f);
+ const x=new XMLHttpRequest();x.open("POST",URL_+"/storage/v1/object/files/"+path);x.setRequestHeader("Authorization","Bearer "+tok);x.setRequestHeader("apikey",KEY);
+ x.upload.onprogress=e=>{pg.style.width=(e.loaded/e.total*100)+"%"};
+ x.onload=async()=>{if(x.status<300){const r=await SB.from("files").insert({folder_id:fid,name:f.name,path,size:f.size});row.querySelector("span").textContent=(r.error?"❌ ":"✅ ")+f.name;res(!r.error)}else{row.querySelector("span").textContent="❌ "+f.name+" ("+x.status+")";res(false)}};
+ x.onerror=()=>{row.querySelector("span").textContent="❌ "+f.name;res(false)};x.send(fd)})}
+async function up(fs){const fid=v("uf");if(!fid||!fs.length)return toast("اختار فولدر الأول");
+ $("ups").innerHTML=fs.map((f,i)=>`<div class="upr" id="u${i}"><span>⏳ ${esc(f.name)}</span><div class="pgw"><div class="pg" style="height:100%;width:0;background:var(--pr);transition:width .15s"></div></div></div>`).join("");
+ const r=await Promise.all(fs.map((f,i)=>up1(f,fid,i)));toast("تم رفع "+r.filter(Boolean).length+" من "+fs.length);setTimeout(panel,1200)}
+async function mv(tb,id,d,pid){let q=SB.from(tb).select("id").order("position");if(tb==="folders")q=q.eq("subject_id",pid);const {data}=await q;const ids=data.map(x=>x.id),i=ids.indexOf(id),j=i+d;if(j<0||j>=ids.length)return;[ids[i],ids[j]]=[ids[j],ids[i]];
+ await Promise.all(ids.map((x,k)=>SB.from(tb).update({position:k+1}).eq("id",x)));panel()}
 async function addS(){if(!v("sa"))return;const {data,error}=await SB.from("subjects").insert({name_ar:v("sa"),name_en:v("se")||v("sa"),icon:v("si")||"📚",position:Date.now()%100000000}).select().single();if(error)return toast(error.message);
  await SB.from("folders").insert(FOL.map((y,i)=>({subject_id:data.id,name_ar:y[0],name_en:y[1],icon:y[2],position:i+1})));panel()}
 async function addF(){if(!v("fa")||!v("fs"))return;if(await ok(SB.from("folders").insert({subject_id:v("fs"),name_ar:v("fa"),name_en:v("fe")||v("fa"),position:Date.now()%100000000})))panel()}
 async function addA(){if(!v("aa"))return;if(await ok(SB.from("announcements").insert({text_ar:v("aa"),text_en:v("ae")||v("aa")})))panel()}
 async function addC(){if(!v("cd")||!v("ct")||!v("cs"))return;if(await ok(SB.from("schedule").insert({day:v("cd"),time:v("ct"),subject:v("cs"),place:v("cp"),position:Date.now()%100000000})))panel()}
 async function ren(tb,id){const {data}=await SB.from(tb).select("*").eq("id",id).single();const a=prompt("الاسم بالعربي",data.name_ar);if(a===null)return;const e=prompt("الاسم بالإنجليزي",data.name_en);if(await ok(SB.from(tb).update({name_ar:a||data.name_ar,name_en:e||data.name_en}).eq("id",id)))panel()}
-async function del(tb,id){if(!confirm("متأكد من الحذف؟"))return;if(tb==="subjects"||tb==="folders"){const col=tb==="subjects"?"subject_id":"id";let fids=tb==="folders"?[id]:((await SB.from("folders").select("id").eq("subject_id",id)).data||[]).map(x=>x.id);
+async function del(tb,id){if(!confirm("متأكد من الحذف؟"))return;if(tb==="subjects"||tb==="folders"){const fids=tb==="folders"?[id]:((await SB.from("folders").select("id").eq("subject_id",id)).data||[]).map(x=>x.id);
   if(fids.length){const fl=(await SB.from("files").select("path").in("folder_id",fids)).data||[];if(fl.length)await SB.storage.from("files").remove(fl.map(x=>x.path))}}
  if(await ok(SB.from(tb).delete().eq("id",id)))panel()}
 async function delFile(id,path){if(!confirm("متأكد من الحذف؟"))return;await SB.storage.from("files").remove([path]);if(await ok(SB.from("files").delete().eq("id",id)))panel()}
-async function upl(){const fid=v("uf"),fs=[...$("ufile").files];if(!fid||!fs.length)return;$("ub").disabled=true;let n=0;
- for(const f of fs){const path=crypto.randomUUID()+"-"+f.name.replace(/[^\w.\-]+/g,"_");toast("جاري رفع "+f.name);
-  const u=await SB.storage.from("files").upload(path,f);if(u.error){toast("فشل رفع "+f.name+": "+u.error.message);continue}
-  if(await ok(SB.from("files").insert({folder_id:fid,name:f.name,path,size:f.size})))n++}
- toast("تم رفع "+n+" ملف");panel()}
 init();
 </script></body></html>
