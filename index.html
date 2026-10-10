@@ -2,8 +2,8 @@
 <html lang="ar" dir="rtl"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>College Hub</title>
-<link rel="manifest" href="manifest.webmanifest"><link rel="icon" href="icon.svg"><meta name="theme-color" content="#3b6fd8">
-<link rel="stylesheet" href="style.css">
+<link rel="manifest" href="manifest.webmanifest"><link rel="icon" href="icon.svg"><meta name="theme-color" content="#6750a4">
+<link rel="stylesheet" href="style.css"><script src="ui.js" defer></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
 <script>addEventListener("error",e=>{var a=document.getElementById("app");if(a)a.innerHTML="<pre style=\"white-space:pre-wrap;padding:16px;color:#c0392b\">"+String(e.message).replace(/</g,"&lt;")+"</pre>"});</script></head><body><div class="wrap" id="app"></div><div id="toast"></div>
 <script>
@@ -35,10 +35,11 @@ function shr(p){const u=location.href.split("#")[0]+"#/"+p;(navigator.clipboard?
 async function rpt(id){const m=prompt(t("msg"));if(m){await SB.from("reports").insert({file_id:id,message:m.slice(0,500)});toast(t("sent"))}}
 async function sendR(){const v=document.getElementById("rq").value.trim();if(v){await SB.from("requests").insert({message:v.slice(0,500)});toast(t("sent"));document.getElementById("rq").value=""}}
 function fileRow(f){const fl=fav().includes(f.id);return`<div class="raised row"><span class="ic">${icon(f.name)}</span><div class="n"><b>${esc(f.name)}</b><div class="mu">${size(f.size)} · ${f.date} · ${f.dl} ${t("down")}</div></div><button onclick="dlf('${f.id}')" class="p">⬇ ${t("dl")}</button><button onclick="tf('${f.id}')" aria-label="fav">${fl?"★":"☆"}</button><button onclick="shr('f/${f.folder||f.fid}')">🔗</button><button onclick="rpt('${f.id}')">⚠️</button></div>`}
-function topbar(){return`<header class="raised"><h1><a href="#/">🎓 ${t("app")}</a></h1><a href="#/fav">★ ${t("fav")}</a><a href="#/sch">📅 ${t("sch")}</a><a href="#/req">✉️ ${t("req")}</a>${ip?`<button onclick="inst()">⬇ ${t("install")}</button>`:""}
-<span class="seg"><button aria-pressed="${lang==="ar"}" onclick="sl('ar')">ع</button><button aria-pressed="${lang==="en"}" onclick="sl('en')">EN</button></span>
-<span class="seg">${["light","dark","system"].map((m,i)=>`<button aria-pressed="${theme===m}" onclick="sth('${m}')" title="${t(["light","dark","sys"][i])}">${["☀️","🌙","🖥️"][i]}</button>`).join("")}</span></header>
-<input id="q" class="inset" placeholder="${t("search")}" oninput="srch(this.value)" aria-label="search"><div id="res"></div>`}
+function topbar(){const h=location.hash.replace(/^#\/?/,"").split("/")[0];const nv=(k,i,l)=>`<a href="#/${k}" class="${h===k?"on":""}"><i>${i}</i><span>${t(l)}</span></a>`;
+return`<header><h1><a href="#/">${t("app")}</a></h1>${ip?`<button onclick="inst()">⬇ ${t("install")}</button>`:""}<button class="ib" onclick="sl(lang==='ar'?'en':'ar')" aria-label="language">${lang==="ar"?"EN":"ع"}</button><button class="ib" onclick="cyc()" aria-label="theme" title="${t(theme==="system"?"sys":theme)}">${{light:"☀️",dark:"🌙",system:"🖥️"}[theme]}</button></header>
+<input id="q" class="inset" placeholder="🔍 ${t("search")}" oninput="srch(this.value)" aria-label="search"><div id="res"></div>
+<nav class="bn">${nv("","🏠","home")}${nv("fav","★","fav")}${nv("sch","📅","sch")}${nv("req","✉️","req")}</nav>`}
+function cyc(){sth({light:"dark",dark:"system",system:"light"}[theme])}
 function sl(l){lang=l;localStorage.lang=l;applyTheme();render()}
 function sth(m){theme=m;localStorage.theme=m;applyTheme();render()}
 function srch(v){const e=document.getElementById("res");v=v.trim().toLowerCase();if(!v){e.innerHTML="";return}
@@ -56,7 +57,7 @@ function fol(id){const f=db.fols.find(x=>x.id===id);if(!f)return home();const s=
 const favs=()=>`<h2>★ ${t("fav")}</h2>${db.files.filter(f=>fav().includes(f.id)).map(fileRow).join("")||`<p class="mu">${t("empty")}</p>`}`;
 const sched=()=>`<h2>📅 ${t("sch")}</h2><div class="raised sc"><table><tr><th>${t("day")}</th><th>${t("time")}</th><th>📘</th><th>${t("place")}</th></tr>${db.sch.map(r=>`<tr><td>${esc(r.day)}</td><td>${esc(r.time)}</td><td>${esc(r.subject)}</td><td>${esc(r.place)}</td></tr>`).join("")}</table></div>`;
 const reqp=()=>`<h2>✉️ ${t("req")}</h2><div class="raised card"><textarea id="rq" rows="4" maxlength="500" placeholder="${t("msg")}"></textarea><button class="p" onclick="sendR()">${t("send")}</button></div>`;
-function render(){if(!db){document.getElementById("app").innerHTML=`<p class="mu">${t("load")}</p>`;return}
+function render(){if(!db){document.getElementById("app").innerHTML=`<div class="sk"></div><div class="sk"></div><div class="sk"></div>`;return}
  const r=location.hash.replace(/^#\/?/,"").split("/");const m={s:()=>subj(r[1]),f:()=>fol(r[1]),fav:favs,sch:sched,req:reqp}[r[0]];
  const q=document.getElementById("q"),val=q?q.value:"";document.getElementById("app").innerHTML=topbar()+`<main>${(m||home)()}</main>`;if(val){document.getElementById("q").value=val;srch(val)}}
 addEventListener("hashchange",render);
