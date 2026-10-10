@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>College Hub</title>
+<link rel="manifest" href="manifest.webmanifest"><link rel="icon" href="icon.svg"><meta name="theme-color" content="#3b6fd8">
+<link rel="stylesheet" href="style.css">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
+</head><body><div class="wrap" id="app"></div><div id="toast"></div>
+<script>
+const SB=supabase.createClient("https://myjirhvkucbkfjuowewe.supabase.co","eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im15amlyaHZrdWNia2ZqdW93ZXdlIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODY4NzQ5NjAsImV4cCI6MjEwMjQ1MDk2MH0.67yCEJgsu_8i_mausJaR6kweLQtxmvehkvFD4b5wI54");
+const T={
+ ar:{app:"مركز الكلية",home:"الرئيسية",fav:"المفضلة",sch:"الجدول",req:"اطلب ملف",search:"ابحث في المواد والملفات...",latest:"آخر المرفوعات",subs:"المواد",ann:"إعلانات",empty:"لا يوجد شيء هنا بعد",dl:"تحميل",down:"تحميل",files:"ملف",light:"فاتح",dark:"داكن",sys:"النظام",copied:"تم نسخ الرابط",sent:"تم الإرسال",msg:"اكتب رسالتك",send:"إرسال",day:"اليوم",time:"الوقت",place:"المكان",noRes:"لا نتائج",install:"ثبّت التطبيق",load:"جاري التحميل...",off:"أنت أوفلاين، البيانات من آخر مرة"},
+ en:{app:"College Hub",home:"Home",fav:"Favorites",sch:"Schedule",req:"Request a file",search:"Search subjects and files...",latest:"Latest uploads",subs:"Subjects",ann:"Announcements",empty:"Nothing here yet",dl:"Download",down:"downloads",files:"files",light:"Light",dark:"Dark",sys:"System",copied:"Link copied",sent:"Sent",msg:"Write your message",send:"Send",day:"Day",time:"Time",place:"Place",noRes:"No results",install:"Install app",load:"Loading...",off:"You're offline, showing last saved data"}};
+let db=null,lang=localStorage.lang||"ar",theme=localStorage.theme||"system",ip=null;
+const t=k=>T[lang][k],nm=o=>o[lang]||o.ar;
+const fav=()=>{try{return JSON.parse(localStorage.fav||"[]")}catch(e){return[]}};
+const esc=s=>String(s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const icon=n=>{n=n.toLowerCase();return/pdf$/.test(n)?"📕":/pptx?$/.test(n)?"📙":/docx?$/.test(n)?"📘":/xlsx?$|csv$/.test(n)?"📗":/mp4|mkv|mov$/.test(n)?"🎬":/zip|rar$/.test(n)?"🗜️":"📄"};
+const size=b=>b>1048576?(b/1048576).toFixed(1)+" MB":Math.max(1,Math.round(b/1024))+" KB";
+const toast=m=>{const e=document.getElementById("toast");e.innerHTML="<span>"+esc(m)+"</span>";setTimeout(()=>e.innerHTML="",2400)};
+function applyTheme(){const r=document.documentElement;theme==="system"?r.removeAttribute("data-theme"):r.setAttribute("data-theme",theme);r.lang=lang;r.dir=lang==="ar"?"rtl":"ltr"}
+async function load(){
+ try{const q=n=>SB.from(n).select("*");const [s,f,fi,a,sc]=await Promise.all([q("subjects").order("position"),q("folders").order("position"),q("files").order("created_at"),q("announcements").order("created_at",{ascending:false}),q("schedule").order("position")]);
+ if(s.error||f.error||fi.error)throw 0;
+ db={subs:s.data.map(x=>({id:x.id,ar:x.name_ar,en:x.name_en,ic:x.icon})),fols:f.data.map(x=>({id:x.id,sid:x.subject_id,ar:x.name_ar,en:x.name_en,ic:x.icon})),
+ files:fi.data.map(x=>({id:x.id,fid:x.folder_id,name:x.name,path:x.path,size:x.size,date:x.created_at.slice(0,10),dl:x.downloads})),
+ ann:(a.data||[]).map(x=>({id:x.id,ar:x.text_ar,en:x.text_en})),sch:(sc.data||[])};localStorage.cache=JSON.stringify(db)}
+ catch(e){try{db=JSON.parse(localStorage.cache);toast(t("off"))}catch(x){db={subs:[],fols:[],files:[],ann:[],sch:[]}}}
+ render()}
+const url=p=>SB.storage.from("files").getPublicUrl(p).data.publicUrl;
+async function dlf(id){const f=db.files.find(x=>x.id===id);SB.rpc("increment_downloads",{fid:id}).then(()=>{});f.dl++;
+ try{const b=await (await fetch(url(f.path))).blob();const a=document.createElement("a");a.href=URL.createObjectURL(b);a.download=f.name;document.body.appendChild(a);a.click();a.remove()}catch(e){window.open(url(f.path),"_blank")}render()}
+function tf(id){let a=fav();a=a.includes(id)?a.filter(x=>x!==id):[...a,id];localStorage.fav=JSON.stringify(a);render()}
+function shr(p){const u=location.href.split("#")[0]+"#/"+p;(navigator.clipboard?navigator.clipboard.writeText(u):Promise.reject()).then(()=>toast(t("copied")),()=>toast(u))}
+async function rpt(id){const m=prompt(t("msg"));if(m){await SB.from("reports").insert({file_id:id,message:m.slice(0,500)});toast(t("sent"))}}
+async function sendR(){const v=document.getElementById("rq").value.trim();if(v){await SB.from("requests").insert({message:v.slice(0,500)});toast(t("sent"));document.getElementById("rq").value=""}}
+function fileRow(f){const fl=fav().includes(f.id);return`<div class="raised row"><span class="ic">${icon(f.name)}</span><div class="n"><b>${esc(f.name)}</b><div class="mu">${size(f.size)} · ${f.date} · ${f.dl} ${t("down")}</div></div><button onclick="dlf('${f.id}')" class="p">⬇ ${t("dl")}</button><button onclick="tf('${f.id}')" aria-label="fav">${fl?"★":"☆"}</button><button onclick="shr('f/${f.folder||f.fid}')">🔗</button><button onclick="rpt('${f.id}')">⚠️</button></div>`}
+function top(){return`<header class="raised"><h1><a href="#/">🎓 ${t("app")}</a></h1><a href="#/fav">★ ${t("fav")}</a><a href="#/sch">📅 ${t("sch")}</a><a href="#/req">✉️ ${t("req")}</a>${ip?`<button onclick="inst()">⬇ ${t("install")}</button>`:""}
+<span class="seg"><button aria-pressed="${lang==="ar"}" onclick="sl('ar')">ع</button><button aria-pressed="${lang==="en"}" onclick="sl('en')">EN</button></span>
+<span class="seg">${["light","dark","system"].map((m,i)=>`<button aria-pressed="${theme===m}" onclick="sth('${m}')" title="${t(["light","dark","sys"][i])}">${["☀️","🌙","🖥️"][i]}</button>`).join("")}</span></header>
+<input id="q" class="inset" placeholder="${t("search")}" oninput="srch(this.value)" aria-label="search"><div id="res"></div>`}
+function sl(l){lang=l;localStorage.lang=l;applyTheme();render()}
+function sth(m){theme=m;localStorage.theme=m;applyTheme();render()}
+function srch(v){const e=document.getElementById("res");v=v.trim().toLowerCase();if(!v){e.innerHTML="";return}
+ const s=db.subs.filter(x=>(x.ar+x.en).toLowerCase().includes(v)),f=db.files.filter(x=>x.name.toLowerCase().includes(v));
+ e.innerHTML=(s.map(x=>`<a class="raised row" href="#/s/${x.id}" style="color:inherit;text-decoration:none"><span class="ic">${x.ic}</span><b>${esc(nm(x))}</b></a>`).join("")+f.map(fileRow).join(""))||`<p class="mu">${t("noRes")}</p>`}
+const cnt=s=>db.files.filter(f=>db.fols.find(x=>x.id===f.fid&&x.sid===s)).length;
+function home(){const l=[...db.files].reverse().slice(0,5);
+ return`<h2>📢 ${t("ann")}</h2>${db.ann.map(a=>`<div class="raised ann">${esc(nm(a))}</div>`).join("")||`<p class="mu">${t("empty")}</p>`}
+<h2>📚 ${t("subs")}</h2><div class="g">${db.subs.map(s=>`<a class="raised card" href="#/s/${s.id}"><div class="ic">${s.ic}</div><b>${esc(nm(s))}</b><div class="mu">${cnt(s.id)} ${t("files")}</div></a>`).join("")}</div>
+<h2>🆕 ${t("latest")}</h2>${l.map(fileRow).join("")||`<p class="mu">${t("empty")}</p>`}`}
+function subj(id){const s=db.subs.find(x=>x.id===id);if(!s)return home();
+ return`<p class="crumb"><a href="#/">${t("home")}</a> / ${esc(nm(s))} <button onclick="shr('s/${id}')">🔗</button></p><h2>${s.ic} ${esc(nm(s))}</h2><div class="g">${db.fols.filter(f=>f.sid===id).map(f=>`<a class="raised card" href="#/f/${f.id}"><div class="ic">${f.ic||"📁"}</div><b>${esc(nm(f))}</b><div class="mu">${db.files.filter(x=>x.fid===f.id).length} ${t("files")}</div></a>`).join("")}</div>`}
+function fol(id){const f=db.fols.find(x=>x.id===id);if(!f)return home();const s=db.subs.find(x=>x.id===f.sid);
+ return`<p class="crumb"><a href="#/">${t("home")}</a> / <a href="#/s/${s.id}">${esc(nm(s))}</a> / ${esc(nm(f))} <button onclick="shr('f/${id}')">🔗</button></p>${db.files.filter(x=>x.fid===id).map(fileRow).join("")||`<p class="mu">${t("empty")}</p>`}`}
+const favs=()=>`<h2>★ ${t("fav")}</h2>${db.files.filter(f=>fav().includes(f.id)).map(fileRow).join("")||`<p class="mu">${t("empty")}</p>`}`;
+const sched=()=>`<h2>📅 ${t("sch")}</h2><div class="raised sc"><table><tr><th>${t("day")}</th><th>${t("time")}</th><th>📘</th><th>${t("place")}</th></tr>${db.sch.map(r=>`<tr><td>${esc(r.day)}</td><td>${esc(r.time)}</td><td>${esc(r.subject)}</td><td>${esc(r.place)}</td></tr>`).join("")}</table></div>`;
+const reqp=()=>`<h2>✉️ ${t("req")}</h2><div class="raised card"><textarea id="rq" rows="4" maxlength="500" placeholder="${t("msg")}"></textarea><button class="p" onclick="sendR()">${t("send")}</button></div>`;
+function render(){if(!db){document.getElementById("app").innerHTML=`<p class="mu">${t("load")}</p>`;return}
+ const r=location.hash.replace(/^#\/?/,"").split("/");const m={s:()=>subj(r[1]),f:()=>fol(r[1]),fav:favs,sch:sched,req:reqp}[r[0]];
+ const q=document.getElementById("q"),val=q?q.value:"";document.getElementById("app").innerHTML=top()+`<main>${(m||home)()}</main>`;if(val){document.getElementById("q").value=val;srch(val)}}
+addEventListener("hashchange",render);
+addEventListener("beforeinstallprompt",e=>{e.preventDefault();ip=e;render()});
+function inst(){ip.prompt();ip=null;render()}
+if("serviceWorker" in navigator)navigator.serviceWorker.register("sw.js").catch(()=>{});
+applyTheme();render();load();
+</script></body></html>
