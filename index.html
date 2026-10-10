@@ -3,7 +3,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>College Hub</title>
 <link rel="manifest" href="manifest.webmanifest"><link rel="icon" href="icon.svg"><meta name="theme-color" content="#6750a4">
-<link rel="stylesheet" href="style.css?v=4"><script src="ui.js?v=4" defer></script>
+<link rel="stylesheet" href="style.css?v=5"><script src="ui.js?v=4" defer></script><script src="fx.js?v=5" defer></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
 <script>addEventListener("error",e=>{var a=document.getElementById("app");if(a)a.innerHTML="<pre style=\"white-space:pre-wrap;padding:16px;color:#c0392b\">"+String(e.message).replace(/</g,"&lt;")+"</pre>"});</script><script src="https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js"></script>
 </head><body><div class="wrap" id="app"></div><div id="toast"></div><div id="sh"></div><div id="bar"></div><div id="ptr">↻</div>
@@ -30,7 +30,7 @@ function applyTheme(){const r=document.documentElement;theme==="system"?r.remove
 async function load(){
  try{const q=n=>SB.from(n).select("*");const [s,f,fi,a,sc]=await Promise.all([q("subjects").order("position"),q("folders").order("position"),q("files").order("created_at"),q("announcements").order("created_at",{ascending:false}),q("schedule").order("position")]);
  if(s.error||f.error||fi.error)throw 0;
- db={subs:s.data.map(x=>({id:x.id,ar:x.name_ar,en:x.name_en,ic:x.icon})),fols:f.data.map(x=>({id:x.id,sid:x.subject_id,ar:x.name_ar,en:x.name_en,ic:x.icon})),
+ db={subs:s.data.map(x=>({id:x.id,ar:x.name_ar,en:x.name_en,ic:x.icon,th:x.theme||"none"})),fols:f.data.map(x=>({id:x.id,sid:x.subject_id,ar:x.name_ar,en:x.name_en,ic:x.icon})),
  files:fi.data.map(x=>({id:x.id,fid:x.folder_id,name:x.name,path:x.path,size:x.size,date:x.created_at.slice(0,10),dl:x.downloads})),
  ann:(a.data||[]).map(x=>({id:x.id,ar:x.text_ar,en:x.text_en})),sch:(sc.data||[])};localStorage.cache=JSON.stringify(db)}
  catch(e){try{db=JSON.parse(localStorage.cache);toast(t("off"))}catch(x){db={subs:[],fols:[],files:[],ann:[],sch:[]}}}
@@ -91,6 +91,7 @@ const sched=()=>`<h2>📅 ${t("sch")}</h2><div class="raised sc"><table><tr><th>
 const reqp=()=>`<h2>✉️ ${t("req")}</h2><div class="raised card"><textarea id="rq" rows="4" maxlength="500" placeholder="${t("msg")}"></textarea><button class="p" onclick="sendR()">${t("send")}</button></div>`;
 function render(){if(!db){$("app").innerHTML='<div class="sk"></div><div class="sk"></div><div class="sk"></div>';return}
  const r=location.hash.replace(/^#\/?/,"").split("/");const m={s:()=>subj(r[1]),f:()=>fol(r[1]),fav:favs,sch:sched,req:reqp}[r[0]];
+ let th="none";if(r[0]==="s"||r[0]==="f"){const fo=r[0]==="f"?db.fols.find(x=>x.id===r[1]):null,sb=db.subs.find(x=>x.id===(fo?fo.sid:r[1]));if(sb)th=sb.th}window.__th=th;window.FX&&FX.set(th);
  const q=$("q"),val=q?q.value:"";$("app").innerHTML=topbar()+`<main>${(m||home)()}</main>`;if(val){$("q").value=val;srch(val)}}
 let cur=location.hash;const pos={};
 addEventListener("hashchange",()=>{pos[cur]=window.scrollY;cur=location.hash;shut();flt="all";const go=()=>{render();scrollTo(0,pos[cur]||0)};document.startViewTransition?document.startViewTransition(go):go()});
