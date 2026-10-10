@@ -2,7 +2,7 @@
 <html lang="ar" dir="rtl"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="robots" content="noindex,nofollow"><title>Admin</title><link rel="icon" href="../icon.svg">
-<link rel="stylesheet" href="../style.css?v=4"><script src="../ui.js?v=4" defer></script>
+<link rel="stylesheet" href="../style.css?v=5"><script src="../ui.js?v=4" defer></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
 <script>addEventListener("error",e=>{var a=document.getElementById("app");if(a)a.innerHTML="<pre style=\"white-space:pre-wrap;padding:16px;color:#c0392b\">"+String(e.message).replace(/</g,"&lt;")+"</pre>"});</script>
 </head><body><div class="wrap" id="app"></div><div id="toast"></div>
@@ -32,7 +32,7 @@ async function panel(){
 <div class="sg"><div><b>${S.length}</b>مواد</div><div><b>${FI.length}</b>ملفات</div><div><b>${dls}</b>تحميلات</div></div>
 ${topf.length?`<h2>🔥 الأكثر تحميلاً</h2>${topf.map(x=>`<div class="raised row"><span class="n">📄 ${esc(x.name)}</span><b>⬇ ${x.downloads}</b></div>`).join("")}`:""}
 <h2>📤 رفع ملفات</h2><div class="raised card"><select id="uf">${fo}</select><div class="dz" id="dz">⬆️ اسحب الملفات هنا أو اضغط للاختيار</div><input id="uff" type="file" multiple hidden><div id="ups"></div></div>
-<h2>المواد والفولدرات</h2>${S.map(x=>`<div class="raised card" style="margin:10px 0"><div class="row" style="padding:0;margin:0"><b class="n">${esc(x.icon)} ${esc(x.name_ar)} / ${esc(x.name_en)}</b>${ud("subjects",x.id)}<button class="sm" onclick="ren('subjects','${x.id}')">✎</button><button class="x sm" onclick="del('subjects','${x.id}')">🗑</button></div>
+<h2>المواد والفولدرات</h2>${S.map(x=>`<div class="raised card" style="margin:10px 0"><div class="row" style="padding:0;margin:0"><b class="n">${esc(x.icon)} ${esc(x.name_ar)} / ${esc(x.name_en)}</b>${ud("subjects",x.id)}<select class="sel" onchange="setTh('${x.id}',this.value)" aria-label="animation">${[["none","بدون أنيميشن"],["politics","🏛️ سياسية"],["finance","📈 مالية"],["it","💻 IT"]].map(o=>`<option value="${o[0]}" ${x.theme===o[0]?"selected":""}>${o[1]}</option>`).join("")}</select><button class="sm" onclick="ren('subjects','${x.id}')">✎</button><button class="x sm" onclick="del('subjects','${x.id}')">🗑</button></div>
 ${F.filter(y=>y.subject_id===x.id).map(y=>`<div class="row"><span class="n">${esc(y.icon)} ${esc(y.name_ar)} / ${esc(y.name_en)} <span class="mu">(${FI.filter(z=>z.folder_id===y.id).length})</span></span>${ud("folders",y.id,x.id)}<button class="sm" onclick="ren('folders','${y.id}')">✎</button><button class="x sm" onclick="del('folders','${y.id}')">🗑</button></div>`).join("")}</div>`).join("")}
 <div class="raised card"><b>إضافة مادة</b><input id="sa" placeholder="الاسم بالعربي"><input id="se" placeholder="الاسم بالإنجليزي"><input id="si" placeholder="إيموجي (اختياري)" maxlength="4"><button class="p" onclick="addS()">إضافة (مع 4 فولدرات جاهزة)</button></div>
 <div class="raised card" style="margin-top:12px"><b>إضافة فولدر</b><select id="fs">${so}</select><input id="fa" placeholder="الاسم بالعربي"><input id="fe" placeholder="الاسم بالإنجليزي"><button class="p" onclick="addF()">إضافة</button></div>
@@ -56,6 +56,7 @@ function up1(f,fid,i){return new Promise(async res=>{const row=$("u"+i),pg=row.q
 async function up(fs){const fid=v("uf");if(!fid||!fs.length)return toast("اختار فولدر الأول");
  $("ups").innerHTML=fs.map((f,i)=>`<div class="upr" id="u${i}"><span>⏳ ${esc(f.name)}</span><div class="pgw"><div class="pg" style="height:100%;width:0;background:var(--pr);transition:width .15s"></div></div></div>`).join("");
  const r=await Promise.all(fs.map((f,i)=>up1(f,fid,i)));toast("تم رفع "+r.filter(Boolean).length+" من "+fs.length);setTimeout(panel,1200)}
+async function setTh(id,v2){if(await ok(SB.from("subjects").update({theme:v2}).eq("id",id)))toast("تم تغيير الأنيميشن")}
 async function mv(tb,id,d,pid){let q=SB.from(tb).select("id").order("position");if(tb==="folders")q=q.eq("subject_id",pid);const {data}=await q;const ids=data.map(x=>x.id),i=ids.indexOf(id),j=i+d;if(j<0||j>=ids.length)return;[ids[i],ids[j]]=[ids[j],ids[i]];
  await Promise.all(ids.map((x,k)=>SB.from(tb).update({position:k+1}).eq("id",x)));panel()}
 async function addS(){if(!v("sa"))return;const {data,error}=await SB.from("subjects").insert({name_ar:v("sa"),name_en:v("se")||v("sa"),icon:v("si")||"📚",position:Date.now()%100000000}).select().single();if(error)return toast(error.message);
