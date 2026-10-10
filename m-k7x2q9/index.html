@@ -1,8 +1,8 @@
 <!DOCTYPE html>
 <html lang="ar" dir="rtl"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<meta name="robots" content="noindex,nofollow"><title>Admin</title><link rel="icon" href="../icon.svg">
-<link rel="stylesheet" href="../style.css?v=6"><script src="../ui.js?v=4" defer></script>
+<meta name="robots" content="noindex,nofollow"><title>Admin</title><link rel="icon" href="../logo.png">
+<link rel="stylesheet" href="../style.css?v=7"><script src="../ui.js?v=4" defer></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
 <script>addEventListener("error",function(e){var b=document.getElementById("errb");if(!b){b=document.createElement("pre");b.id="errb";b.style.cssText="position:fixed;inset-inline:8px;bottom:20px;z-index:99;margin:0;padding:10px 14px;border-radius:12px;background:#b3261e;color:#fff;white-space:pre-wrap;font-size:12px";b.onclick=function(){b.remove()};document.body.appendChild(b)}b.textContent=String(e.message)});</script>
 </head><body><div class="wrap" id="app"></div><div id="toast"></div>
@@ -28,7 +28,7 @@ async function panel(){
  const fo=F.map(x=>`<option value="${x.id}">${esc((S.find(y=>y.id===x.subject_id)||{}).name_ar)} / ${esc(x.name_ar)}</option>`).join("");
  const so=S.map(x=>`<option value="${x.id}">${esc(x.name_ar)}</option>`).join("");
  const ud=(tb,id,pid)=>`<button class="sm" onclick="mv('${tb}','${id}',-1,'${pid||""}')">▲</button><button class="sm" onclick="mv('${tb}','${id}',1,'${pid||""}')">▼</button>`;
- app.innerHTML=`<header><h1>⚙️ لوحة الأدمن</h1><button onclick="SB.auth.signOut().then(()=>loginForm())">خروج</button></header>
+ app.innerHTML=`<header><h1><img class="lg" src="../logo.png" alt="PPIS">لوحة الأدمن</h1><button onclick="SB.auth.signOut().then(()=>loginForm())">خروج</button></header>
 <div class="sg"><div><b>${S.length}</b>مواد</div><div><b>${FI.length}</b>ملفات</div><div><b>${dls}</b>تحميلات</div></div>
 ${topf.length?`<h2>🔥 الأكثر تحميلاً</h2>${topf.map(x=>`<div class="raised row"><span class="n">📄 ${esc(x.name)}</span><b>⬇ ${x.downloads}</b></div>`).join("")}`:""}
 <h2>📤 رفع ملفات</h2><div class="raised card"><select id="uf">${fo}</select><div class="dz" id="dz">⬆️ اسحب الملفات هنا أو اضغط للاختيار</div><input id="uff" type="file" multiple hidden><div id="ups"></div></div>
