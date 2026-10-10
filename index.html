@@ -3,21 +3,29 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>College Hub</title>
 <link rel="manifest" href="manifest.webmanifest"><link rel="icon" href="icon.svg"><meta name="theme-color" content="#6750a4">
-<link rel="stylesheet" href="style.css?v=3"><script src="ui.js?v=3" defer></script>
+<link rel="stylesheet" href="style.css?v=4"><script src="ui.js?v=4" defer></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
-<script>addEventListener("error",e=>{var a=document.getElementById("app");if(a)a.innerHTML="<pre style=\"white-space:pre-wrap;padding:16px;color:#c0392b\">"+String(e.message).replace(/</g,"&lt;")+"</pre>"});</script></head><body><div class="wrap" id="app"></div><div id="toast"></div>
+<script>addEventListener("error",e=>{var a=document.getElementById("app");if(a)a.innerHTML="<pre style=\"white-space:pre-wrap;padding:16px;color:#c0392b\">"+String(e.message).replace(/</g,"&lt;")+"</pre>"});</script><script src="https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js"></script>
+</head><body><div class="wrap" id="app"></div><div id="toast"></div><div id="sh"></div><div id="bar"></div><div id="ptr">↻</div>
 <script>
+const $=i=>document.getElementById(i);
 const SB=supabase.createClient("https://myjirhvkucbkfjuowewe.supabase.co","eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im15amlyaHZrdWNia2ZqdW93ZXdlIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODY4NzQ5NjAsImV4cCI6MjEwMjQ1MDk2MH0.67yCEJgsu_8i_mausJaR6kweLQtxmvehkvFD4b5wI54");
 const T={
- ar:{app:"مركز الكلية",home:"الرئيسية",fav:"المفضلة",sch:"الجدول",req:"اطلب ملف",search:"ابحث في المواد والملفات...",latest:"آخر المرفوعات",subs:"المواد",ann:"إعلانات",empty:"لا يوجد شيء هنا بعد",dl:"تحميل",down:"تحميل",files:"ملف",light:"فاتح",dark:"داكن",sys:"النظام",copied:"تم نسخ الرابط",sent:"تم الإرسال",msg:"اكتب رسالتك",send:"إرسال",day:"اليوم",time:"الوقت",place:"المكان",noRes:"لا نتائج",install:"ثبّت التطبيق",load:"جاري التحميل...",off:"أنت أوفلاين، البيانات من آخر مرة"},
- en:{app:"College Hub",home:"Home",fav:"Favorites",sch:"Schedule",req:"Request a file",search:"Search subjects and files...",latest:"Latest uploads",subs:"Subjects",ann:"Announcements",empty:"Nothing here yet",dl:"Download",down:"downloads",files:"files",light:"Light",dark:"Dark",sys:"System",copied:"Link copied",sent:"Sent",msg:"Write your message",send:"Send",day:"Day",time:"Time",place:"Place",noRes:"No results",install:"Install app",load:"Loading...",off:"You're offline, showing last saved data"}};
-let db=null,lang=localStorage.lang||"ar",theme=localStorage.theme||"system",ip=null;
+ ar:{app:"مركز الكلية",home:"الرئيسية",fav:"المفضلة",sch:"الجدول",req:"اطلب ملف",search:"ابحث في المواد والملفات...",latest:"آخر المرفوعات",top:"الأكتر تحميلاً",subs:"المواد",ann:"إعلانات",empty:"لا يوجد شيء هنا بعد",dl:"تحميل",down:"تحميل",files:"ملف",light:"فاتح",dark:"داكن",sys:"النظام",copied:"تم نسخ الرابط",sent:"تم الإرسال",msg:"اكتب رسالتك",send:"إرسال",day:"اليوم",time:"الوقت",place:"المكان",noRes:"لا نتائج",install:"ثبّت التطبيق",off:"أنت أوفلاين، البيانات من آخر مرة",hello:"أهلاً بيك 👋",hsub:"كل مصادر الكلية في مكان واحد",all:"الكل",pdf:"PDF",ppt:"سلايدات",doc:"Word",vid:"فيديو",oth:"أخرى",sNew:"الأحدث",sTop:"الأكثر تحميلاً",sName:"الاسم",nw:"جديد",zip:"تحميل الكل (ZIP)",zipping:"جاري تجهيز الملف...",rep:"بلّغ",share:"مشاركة",favb:"مفضلة",pull:"جاري التحديث...",upd:"تم التحديث",fo:"فولدرات"},
+ en:{app:"College Hub",home:"Home",fav:"Favorites",sch:"Schedule",req:"Request a file",search:"Search subjects and files...",latest:"Latest uploads",top:"Most downloaded",subs:"Subjects",ann:"Announcements",empty:"Nothing here yet",dl:"Download",down:"downloads",files:"files",light:"Light",dark:"Dark",sys:"System",copied:"Link copied",sent:"Sent",msg:"Write your message",send:"Send",day:"Day",time:"Time",place:"Place",noRes:"No results",install:"Install app",off:"You're offline, showing last saved data",hello:"Welcome 👋",hsub:"All your college resources in one place",all:"All",pdf:"PDF",ppt:"Slides",doc:"Word",vid:"Video",oth:"Other",sNew:"Newest",sTop:"Most downloaded",sName:"Name",nw:"New",zip:"Download all (ZIP)",zipping:"Preparing file...",rep:"Report",share:"Share",favb:"Favorite",pull:"Refreshing...",upd:"Updated",fo:"folders"}};
+let db=null,lang=localStorage.lang||"ar",theme=localStorage.theme||"system",ip=null,qq="",openId=null,flt="all",srt="new",tab="new";
 const t=k=>T[lang][k],nm=o=>o[lang]||o.ar;
 const fav=()=>{try{return JSON.parse(localStorage.fav||"[]")}catch(e){return[]}};
 const esc=s=>String(s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
-const icon=n=>{n=n.toLowerCase();return/pdf$/.test(n)?"📕":/pptx?$/.test(n)?"📙":/docx?$/.test(n)?"📘":/xlsx?$|csv$/.test(n)?"📗":/mp4|mkv|mov$/.test(n)?"🎬":/zip|rar$/.test(n)?"🗜️":"📄"};
+const nz=s=>String(s).toLowerCase().replace(/[\u064B-\u065F\u0670\u0640]/g,"").replace(/[أإآ]/g,"ا").replace(/ى/g,"ي").replace(/ة/g,"ه");
+const grp=n=>{n=n.toLowerCase();return/\.pdf$/.test(n)?"pdf":/\.pptx?$/.test(n)?"ppt":/\.docx?$/.test(n)?"doc":/\.(mp4|mkv|mov|avi)$/.test(n)?"vid":"oth"};
+const icon=n=>({pdf:"📕",ppt:"📙",doc:"📘",vid:"🎬",oth:/xlsx?$|csv$/i.test(n)?"📗":/zip|rar$/i.test(n)?"🗜️":"📄"})[grp(n)];
 const size=b=>b>1048576?(b/1048576).toFixed(1)+" MB":Math.max(1,Math.round(b/1024))+" KB";
-const toast=m=>{const e=document.getElementById("toast");e.innerHTML="<span>"+esc(m)+"</span>";setTimeout(()=>e.innerHTML="",2400)};
+const hue=id=>{let h=0;for(const c of String(id))h=(h*31+c.charCodeAt(0))%360;return h};
+const isNew=f=>Date.now()-new Date(f.date).getTime()<3*864e5;
+const hl=x=>{if(!qq)return esc(x);const a=nz(x),q=nz(qq),i=a.indexOf(q);if(i<0||a.length!==x.length)return esc(x);return esc(x.slice(0,i))+"<mark>"+esc(x.slice(i,i+q.length))+"</mark>"+esc(x.slice(i+q.length))};
+const toast=m=>{$("toast").innerHTML="<span>"+esc(m)+"</span>";setTimeout(()=>$("toast").innerHTML="",2400)};
+const bar=p=>{const b=$("bar");b.style.opacity=p>0&&p<1?1:0;b.style.transform=`scaleX(${p})`;const g=$("pg");if(g)g.style.width=p*100+"%";if(p>=1)setTimeout(()=>{b.style.opacity=0;b.style.transform="scaleX(0)";if($("pg"))$("pg").style.width=0},500)};
 function applyTheme(){const r=document.documentElement;theme==="system"?r.removeAttribute("data-theme"):r.setAttribute("data-theme",theme);r.lang=lang;r.dir=lang==="ar"?"rtl":"ltr"}
 async function load(){
  try{const q=n=>SB.from(n).select("*");const [s,f,fi,a,sc]=await Promise.all([q("subjects").order("position"),q("folders").order("position"),q("files").order("created_at"),q("announcements").order("created_at",{ascending:false}),q("schedule").order("position")]);
@@ -26,15 +34,30 @@ async function load(){
  files:fi.data.map(x=>({id:x.id,fid:x.folder_id,name:x.name,path:x.path,size:x.size,date:x.created_at.slice(0,10),dl:x.downloads})),
  ann:(a.data||[]).map(x=>({id:x.id,ar:x.text_ar,en:x.text_en})),sch:(sc.data||[])};localStorage.cache=JSON.stringify(db)}
  catch(e){try{db=JSON.parse(localStorage.cache);toast(t("off"))}catch(x){db={subs:[],fols:[],files:[],ann:[],sch:[]}}}
- render()}
+ render();if(openId)sheet(openId)}
 const url=p=>SB.storage.from("files").getPublicUrl(p).data.publicUrl;
-async function dlf(id){const f=db.files.find(x=>x.id===id);SB.rpc("increment_downloads",{fid:id}).then(()=>{});f.dl++;
- try{const b=await (await fetch(url(f.path))).blob();const a=document.createElement("a");a.href=URL.createObjectURL(b);a.download=f.name;document.body.appendChild(a);a.click();a.remove()}catch(e){window.open(url(f.path),"_blank")}render()}
-function tf(id){let a=fav();a=a.includes(id)?a.filter(x=>x!==id):[...a,id];localStorage.fav=JSON.stringify(a);render()}
+async function blob(f,onp){const r=await fetch(url(f.path));const len=+r.headers.get("content-length")||f.size||1;const rd=r.body.getReader();let got=0,ch=[];for(;;){const {done,value}=await rd.read();if(done)break;ch.push(value);got+=value.length;onp&&onp(Math.min(.99,got/len))}return new Blob(ch)}
+function save(b,name){const a=document.createElement("a");a.href=URL.createObjectURL(b);a.download=name;document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(a.href),4000)}
+async function dlf(id){const f=db.files.find(x=>x.id===id);bar(.02);
+ try{save(await blob(f,bar),f.name);SB.rpc("increment_downloads",{fid:id}).then(()=>{});f.dl++;bar(1)}catch(e){bar(0);window.open(url(f.path),"_blank")}
+ render();if(openId)sheet(openId)}
+async function dlz(fid){const fs=db.files.filter(x=>x.fid===fid);if(!fs.length)return;toast(t("zipping"));const z=new JSZip();let i=0;
+ try{for(const f of fs){const b=await blob(f,p=>bar((i+p)/fs.length*.95));z.file((i+1)+"-"+f.name,b);SB.rpc("increment_downloads",{fid:f.id}).then(()=>{});i++}
+ save(await z.generateAsync({type:"blob"}),nm(db.fols.find(x=>x.id===fid))+".zip");bar(1);load()}catch(e){bar(0);toast("⚠️")}}
+function tf(id){let a=fav();a=a.includes(id)?a.filter(x=>x!==id):[...a,id];localStorage.fav=JSON.stringify(a);render();if(openId)sheet(openId)}
 function shr(p){const u=location.href.split("#")[0]+"#/"+p;(navigator.clipboard?navigator.clipboard.writeText(u):Promise.reject()).then(()=>toast(t("copied")),()=>toast(u))}
 async function rpt(id){const m=prompt(t("msg"));if(m){await SB.from("reports").insert({file_id:id,message:m.slice(0,500)});toast(t("sent"))}}
-async function sendR(){const v=document.getElementById("rq").value.trim();if(v){await SB.from("requests").insert({message:v.slice(0,500)});toast(t("sent"));document.getElementById("rq").value=""}}
-function fileRow(f){const fl=fav().includes(f.id);return`<div class="raised row"><span class="ic">${icon(f.name)}</span><div class="n"><b>${esc(f.name)}</b><div class="mu">${size(f.size)} · ${f.date} · ${f.dl} ${t("down")}</div></div><button onclick="dlf('${f.id}')" class="p">⬇ ${t("dl")}</button><button onclick="tf('${f.id}')" aria-label="fav">${fl?"★":"☆"}</button><button onclick="shr('f/${f.folder||f.fid}')">🔗</button><button onclick="rpt('${f.id}')">⚠️</button></div>`}
+async function sendR(){const v=$("rq").value.trim();if(v){await SB.from("requests").insert({message:v.slice(0,500)});toast(t("sent"));$("rq").value=""}}
+function sheet(id){const f=db.files.find(x=>x.id===id);if(!f)return;openId=id;const fo=db.fols.find(x=>x.id===f.fid),s=fo&&db.subs.find(x=>x.id===fo.sid),fl=fav().includes(id);
+ $("sh").innerHTML=`<div class="bk" onclick="shut()"></div><div class="pn" id="pn"><div class="hd"></div><div class="ic big">${icon(f.name)}</div><h3>${esc(f.name)}</h3><p class="mu">${s?esc(nm(s))+" › "+esc(nm(fo)):""}</p><p class="mu">${size(f.size)} · ${f.date} · ${f.dl} ${t("down")}</p><div class="pgw"><div id="pg"></div></div>
+ <div class="acts"><button class="p" onclick="dlf('${id}')">⬇ ${t("dl")}</button><button onclick="tf('${id}')">${fl?"★":"☆"} ${t("favb")}</button><button onclick="shr('f/${f.fid}')">🔗 ${t("share")}</button><button onclick="rpt('${id}')">⚠️ ${t("rep")}</button></div></div>`;
+ requestAnimationFrame(()=>$("sh").classList.add("on"))}
+function shut(){openId=null;$("sh").classList.remove("on");setTimeout(()=>{if(!openId)$("sh").innerHTML=""},300)}
+let sy=null;$("sh").addEventListener("touchstart",e=>{if(e.target.closest(".pn"))sy=e.touches[0].clientY},{passive:true});
+$("sh").addEventListener("touchmove",e=>{if(sy===null)return;const d=e.touches[0].clientY-sy,p=$("pn");if(p&&d>0)p.style.transform=`translateY(${d}px)`},{passive:true});
+$("sh").addEventListener("touchend",e=>{if(sy===null)return;const d=e.changedTouches[0].clientY-sy,p=$("pn");sy=null;if(p)p.style.transform="";if(d>90)shut()});
+addEventListener("keydown",e=>{if(e.key==="Escape")shut()});
+function fileRow(f){return`<div class="raised row file" onclick="sheet('${f.id}')" role="button" tabindex="0"><span class="ic">${icon(f.name)}</span><div class="n"><b>${hl(f.name)}</b>${isNew(f)?`<span class="bd">${t("nw")}</span>`:""}<div class="mu">${size(f.size)} · ${f.date} · ${f.dl} ${t("down")}</div></div><button class="ib" onclick="event.stopPropagation();dlf('${f.id}')" aria-label="download">⬇</button></div>`}
 function topbar(){const h=location.hash.replace(/^#\/?/,"").split("/")[0];const nv=(k,i,l)=>`<a href="#/${k}" class="${h===k?"on":""}"><i>${i}</i><span>${t(l)}</span></a>`;
 return`<header><h1><a href="#/">${t("app")}</a></h1>${ip?`<button onclick="inst()">⬇ ${t("install")}</button>`:""}<button class="ib" onclick="sl(lang==='ar'?'en':'ar')" aria-label="language">${lang==="ar"?"EN":"ع"}</button><button class="ib" onclick="cyc()" aria-label="theme" title="${t(theme==="system"?"sys":theme)}">${{light:"☀️",dark:"🌙",system:"🖥️"}[theme]}</button></header>
 <input id="q" class="inset" placeholder="🔍 ${t("search")}" oninput="srch(this.value)" aria-label="search"><div id="res"></div>
@@ -42,25 +65,38 @@ return`<header><h1><a href="#/">${t("app")}</a></h1>${ip?`<button onclick="inst(
 function cyc(){sth({light:"dark",dark:"system",system:"light"}[theme])}
 function sl(l){lang=l;localStorage.lang=l;applyTheme();render()}
 function sth(m){theme=m;localStorage.theme=m;applyTheme();render()}
-function srch(v){const e=document.getElementById("res");v=v.trim().toLowerCase();if(!v){e.innerHTML="";return}
- const s=db.subs.filter(x=>(x.ar+x.en).toLowerCase().includes(v)),f=db.files.filter(x=>x.name.toLowerCase().includes(v));
- e.innerHTML=(s.map(x=>`<a class="raised row" href="#/s/${x.id}" style="color:inherit;text-decoration:none"><span class="ic">${x.ic}</span><b>${esc(nm(x))}</b></a>`).join("")+f.map(fileRow).join(""))||`<p class="mu">${t("noRes")}</p>`}
+function srch(v){qq=v.trim();const e=$("res");if(!qq){e.innerHTML="";return}const q=nz(qq);
+ const s=db.subs.filter(x=>nz(x.ar+" "+x.en).includes(q)),fo=db.fols.filter(x=>nz(x.ar+" "+x.en).includes(q)),f=db.files.filter(x=>nz(x.name).includes(q));
+ const lk=(h,ic,n,sub)=>`<a class="raised row" href="${h}"><span class="ic">${ic}</span><div class="n"><b>${hl(n)}</b>${sub?`<div class="mu">${esc(sub)}</div>`:""}</div></a>`;
+ e.innerHTML=(s.length?`<h2>${t("subs")}</h2>`+s.map(x=>lk("#/s/"+x.id,x.ic,nm(x))).join(""):"")+(fo.length?`<h2>${t("fo")}</h2>`+fo.map(x=>lk("#/f/"+x.id,x.ic||"📁",nm(x),nm(db.subs.find(y=>y.id===x.sid)||{ar:""}))).join(""):"")+(f.length?`<h2>${t("files")}</h2>`+f.map(fileRow).join(""):"")||`<p class="mu">${t("noRes")}</p>`}
 const cnt=s=>db.files.filter(f=>db.fols.find(x=>x.id===f.fid&&x.sid===s)).length;
-function home(){const l=[...db.files].reverse().slice(0,5);
- return`<h2>📢 ${t("ann")}</h2>${db.ann.map(a=>`<div class="raised ann">${esc(nm(a))}</div>`).join("")||`<p class="mu">${t("empty")}</p>`}
-<h2>📚 ${t("subs")}</h2><div class="g">${db.subs.map(s=>`<a class="raised card" href="#/s/${s.id}"><div class="ic">${s.ic}</div><b>${esc(nm(s))}</b><div class="mu">${cnt(s.id)} ${t("files")}</div></a>`).join("")}</div>
-<h2>🆕 ${t("latest")}</h2>${l.map(fileRow).join("")||`<p class="mu">${t("empty")}</p>`}`}
+function setTab(k){tab=k;render()}
+function home(){const l=tab==="new"?[...db.files].reverse().slice(0,6):[...db.files].sort((a,b)=>b.dl-a.dl).slice(0,6);
+ return`<section class="hero"><h2>${t("hello")}</h2><p>${t("hsub")}</p><span class="stat"><b>${db.subs.length}</b> ${t("subs")}</span><span class="stat"><b>${db.files.length}</b> ${t("files")}</span></section>
+${db.ann.length?`<h2>📢 ${t("ann")}</h2>${db.ann.map(a=>`<div class="raised ann">${esc(nm(a))}</div>`).join("")}`:""}
+<h2>📚 ${t("subs")}</h2><div class="g">${db.subs.map(s=>`<a class="raised card sub" style="--h:${hue(s.id)}" href="#/s/${s.id}"><div class="ic">${s.ic}</div><b>${esc(nm(s))}</b><div class="mu">${cnt(s.id)} ${t("files")}</div></a>`).join("")}</div>
+<div class="chips"><button class="chip" aria-pressed="${tab==="new"}" onclick="setTab('new')">🆕 ${t("latest")}</button><button class="chip" aria-pressed="${tab==="top"}" onclick="setTab('top')">🔥 ${t("top")}</button></div>${l.map(fileRow).join("")||`<p class="mu">${t("empty")}</p>`}`}
 function subj(id){const s=db.subs.find(x=>x.id===id);if(!s)return home();
- return`<p class="crumb"><a href="#/">${t("home")}</a> / ${esc(nm(s))} <button onclick="shr('s/${id}')">🔗</button></p><h2>${s.ic} ${esc(nm(s))}</h2><div class="g">${db.fols.filter(f=>f.sid===id).map(f=>`<a class="raised card" href="#/f/${f.id}"><div class="ic">${f.ic||"📁"}</div><b>${esc(nm(f))}</b><div class="mu">${db.files.filter(x=>x.fid===f.id).length} ${t("files")}</div></a>`).join("")}</div>`}
+ return`<p class="crumb"><a href="#/">${t("home")}</a> / ${esc(nm(s))} <button class="ib" onclick="shr('s/${id}')">🔗</button></p><h2>${s.ic} ${esc(nm(s))}</h2><div class="g">${db.fols.filter(f=>f.sid===id).map(f=>`<a class="raised card sub" style="--h:${hue(id)}" href="#/f/${f.id}"><div class="ic">${f.ic||"📁"}</div><b>${esc(nm(f))}</b><div class="mu">${db.files.filter(x=>x.fid===f.id).length} ${t("files")}</div></a>`).join("")}</div>`}
+function setF(k){flt=k;render()}function setS(k){srt=k;render()}
 function fol(id){const f=db.fols.find(x=>x.id===id);if(!f)return home();const s=db.subs.find(x=>x.id===f.sid);
- return`<p class="crumb"><a href="#/">${t("home")}</a> / <a href="#/s/${s.id}">${esc(nm(s))}</a> / ${esc(nm(f))} <button onclick="shr('f/${id}')">🔗</button></p>${db.files.filter(x=>x.fid===id).map(fileRow).join("")||`<p class="mu">${t("empty")}</p>`}`}
+ let fs=db.files.filter(x=>x.fid===id);const all=fs.length;if(flt!=="all")fs=fs.filter(x=>grp(x.name)===flt);
+ fs.sort(srt==="new"?(a,b)=>b.date.localeCompare(a.date):srt==="top"?(a,b)=>b.dl-a.dl:(a,b)=>a.name.localeCompare(b.name));
+ return`<p class="crumb"><a href="#/">${t("home")}</a> / <a href="#/s/${s.id}">${esc(nm(s))}</a> / ${esc(nm(f))} <button class="ib" onclick="shr('f/${id}')">🔗</button></p>
+<div class="chips">${["all","pdf","ppt","doc","vid","oth"].map(k=>`<button class="chip" aria-pressed="${flt===k}" onclick="setF('${k}')">${t(k)}</button>`).join("")}</div>
+<div class="bar2"><select class="sel" onchange="setS(this.value)" aria-label="sort"><option value="new" ${srt==="new"?"selected":""}>${t("sNew")}</option><option value="top" ${srt==="top"?"selected":""}>${t("sTop")}</option><option value="name" ${srt==="name"?"selected":""}>${t("sName")}</option></select>${all?`<button class="p" onclick="dlz('${id}')">📦 ${t("zip")}</button>`:""}</div>
+${fs.map(fileRow).join("")||`<p class="mu">${t("empty")}</p>`}`}
 const favs=()=>`<h2>★ ${t("fav")}</h2>${db.files.filter(f=>fav().includes(f.id)).map(fileRow).join("")||`<p class="mu">${t("empty")}</p>`}`;
 const sched=()=>`<h2>📅 ${t("sch")}</h2><div class="raised sc"><table><tr><th>${t("day")}</th><th>${t("time")}</th><th>📘</th><th>${t("place")}</th></tr>${db.sch.map(r=>`<tr><td>${esc(r.day)}</td><td>${esc(r.time)}</td><td>${esc(r.subject)}</td><td>${esc(r.place)}</td></tr>`).join("")}</table></div>`;
 const reqp=()=>`<h2>✉️ ${t("req")}</h2><div class="raised card"><textarea id="rq" rows="4" maxlength="500" placeholder="${t("msg")}"></textarea><button class="p" onclick="sendR()">${t("send")}</button></div>`;
-function render(){if(!db){document.getElementById("app").innerHTML=`<div class="sk"></div><div class="sk"></div><div class="sk"></div>`;return}
+function render(){if(!db){$("app").innerHTML='<div class="sk"></div><div class="sk"></div><div class="sk"></div>';return}
  const r=location.hash.replace(/^#\/?/,"").split("/");const m={s:()=>subj(r[1]),f:()=>fol(r[1]),fav:favs,sch:sched,req:reqp}[r[0]];
- const q=document.getElementById("q"),val=q?q.value:"";document.getElementById("app").innerHTML=topbar()+`<main>${(m||home)()}</main>`;if(val){document.getElementById("q").value=val;srch(val)}}
-addEventListener("hashchange",render);
+ const q=$("q"),val=q?q.value:"";$("app").innerHTML=topbar()+`<main>${(m||home)()}</main>`;if(val){$("q").value=val;srch(val)}}
+let cur=location.hash;const pos={};
+addEventListener("hashchange",()=>{pos[cur]=window.scrollY;cur=location.hash;shut();flt="all";const go=()=>{render();scrollTo(0,pos[cur]||0)};document.startViewTransition?document.startViewTransition(go):go()});
+let py=null;addEventListener("touchstart",e=>{py=window.scrollY<=0&&!openId&&!e.target.closest("input,select,textarea")?e.touches[0].clientY:null},{passive:true});
+addEventListener("touchmove",e=>{if(py===null)return;const d=e.touches[0].clientY-py,p=$("ptr");if(d>0){p.style.transition="none";p.style.transform=`translate(-50%,${Math.min(d,110)-70}px) rotate(${d*3}deg)`;p.dataset.r=d>85?1:0}},{passive:true});
+addEventListener("touchend",()=>{if(py===null)return;const p=$("ptr"),r=p.dataset.r==="1";p.style.transition="";p.style.transform="";p.dataset.r=0;py=null;if(r){toast(t("pull"));load().then(()=>toast(t("upd")))}});
 addEventListener("beforeinstallprompt",e=>{e.preventDefault();ip=e;render()});
 function inst(){ip.prompt();ip=null;render()}
 if("serviceWorker" in navigator)navigator.serviceWorker.register("sw.js").catch(()=>{});
