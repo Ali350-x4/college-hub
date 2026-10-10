@@ -1,74 +1,106 @@
 <!DOCTYPE html>
 <html lang="ar" dir="rtl"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<meta name="robots" content="noindex,nofollow"><title>Admin</title><link rel="icon" href="../logo.png">
-<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link href="https://fonts.googleapis.com/css2?family=Amiri:wght@400;700&family=IBM+Plex+Sans+Arabic:wght@300;400;500;600;700&family=Source+Serif+4:opsz,wght@8..60,500;8..60,700&display=swap" rel="stylesheet"><link rel="stylesheet" href="../style.css?v=9"><script src="../ui.js?v=4" defer></script>
+<meta name="robots" content="noindex,nofollow"><title>PPIS Admin</title><link rel="icon" href="../logo.png">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link href="https://fonts.googleapis.com/css2?family=Amiri:wght@400;700&family=IBM+Plex+Sans+Arabic:wght@300;400;500;600;700&family=Source+Serif+4:opsz,wght@8..60,500;8..60,700&display=swap" rel="stylesheet"><link rel="stylesheet" href="../style.css?v=10"><script src="../ui.js?v=4" defer></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
 <script>addEventListener("error",function(e){var b=document.getElementById("errb");if(!b){b=document.createElement("pre");b.id="errb";b.style.cssText="position:fixed;inset-inline:8px;bottom:20px;z-index:99;margin:0;padding:10px 14px;border-radius:12px;background:#b3261e;color:#fff;white-space:pre-wrap;font-size:12px";b.onclick=function(){b.remove()};document.body.appendChild(b)}b.textContent=String(e.message)});</script>
-</head><body><div class="wrap" id="app"></div><div id="toast"></div>
+</head><body><div class="wrap" id="app"></div><div id="toast"></div><div id="sh"></div>
 <script>
 const URL_="https://myjirhvkucbkfjuowewe.supabase.co",KEY="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im15amlyaHZrdWNia2ZqdW93ZXdlIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODY4NzQ5NjAsImV4cCI6MjEwMjQ1MDk2MH0.67yCEJgsu_8i_mausJaR6kweLQtxmvehkvFD4b5wI54";
 const SB=supabase.createClient(URL_,KEY);
 const FOL=[["محاضرات","Lectures","🎓"],["سكاشن","Sections","🧪"],["سلايدات","Slides","🖼️"],["بنوك أسئلة","Question banks","❓"]];
+const DN=["الأحد","الإثنين","الثلاثاء","الأربعاء","الخميس","الجمعة","السبت"],KN={lecture:"محاضرة",section:"سكشن",lab:"معمل",elective:"اختياري"},TH=[["none","بدون أنيميشن"],["politics","🏛️ سياسية"],["finance","📈 مالية"],["it","💻 IT"]];
+const HO=[...Array(16)].map((_,i)=>[i+7,(i+7)+":00"]);
 const esc=s=>String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
-const $=i=>document.getElementById(i),v=i=>$(i).value.trim(),app=$("app");
+const $=i=>document.getElementById(i),app=$("app");
 const toast=m=>{$("toast").innerHTML="<span>"+esc(m)+"</span>";setTimeout(()=>$("toast").innerHTML="",2800)};
+const ok=async p=>{const r=await p;if(r.error){toast("خطأ: "+r.error.message);return false}return true};
+const grp=n=>{n=n.toLowerCase();return/\.pdf$/.test(n)?"📕":/\.pptx?$/.test(n)?"📙":/\.docx?$/.test(n)?"📘":/\.(mp4|mkv|mov|avi)$/.test(n)?"🎬":/xlsx?$|csv$/.test(n)?"📗":"📄"};
+const size=b=>b>1048576?(b/1048576).toFixed(1)+" MB":Math.max(1,Math.round(b/1024))+" KB";
+let D={S:[],F:[],FI:[],AN:[],SC:[],RP:[],RQ:[]},ib="rp";
 (function(){const m=localStorage.theme||"system";m!=="system"&&document.documentElement.setAttribute("data-theme",m)})();
-function loginForm(msg){app.innerHTML=`<h2>⚙️ لوحة الأدمن</h2><div class="raised card"><input id="e" type="email" placeholder="الإيميل" autocomplete="username"><input id="p" type="password" placeholder="الباسورد" autocomplete="current-password"><button class="p" onclick="login(v('e'),v('p'))">دخول</button>${msg?`<p class="mu">${esc(msg)}</p>`:""}</div>`}
+/* ---------- login ---------- */
+function loginForm(msg){app.innerHTML=`<div style="text-align:center;margin:40px 0 10px"><img src="../logo.png" alt="PPIS" style="height:110px"></div><h2 style="text-align:center">لوحة الأدمن</h2><div class="raised card"><input id="e" type="email" placeholder="الإيميل" autocomplete="username"><input id="p" type="password" placeholder="الباسورد" autocomplete="current-password"><button class="p" style="width:100%;margin-top:8px" onclick="login($('e').value.trim(),$('p').value)">دخول</button>${msg?`<p class="mu">${esc(msg)}</p>`:""}</div>`}
 async function login(e,p){const {error}=await SB.auth.signInWithPassword({email:e,password:p});if(error)return loginForm("بيانات الدخول غلط");
- const {data}=await SB.rpc("is_admin");if(!data){await SB.auth.signOut();return loginForm("الحساب ده مش أدمن")}panel()}
+ const {data}=await SB.rpc("is_admin");if(!data){await SB.auth.signOut();return loginForm("الحساب ده مش أدمن")}start()}
 async function init(){const h=new URLSearchParams(location.hash.slice(1));
  if(h.get("e")&&h.get("p")){const e=h.get("e"),p=h.get("p");history.replaceState(null,"",location.pathname);return login(e,p)}
- const {data}=await SB.auth.getSession();if(data.session){const a=await SB.rpc("is_admin");if(a.data)return panel()}loginForm()}
-const ok=async p=>{const r=await p;if(r.error){toast("خطأ: "+r.error.message);return false}return true};
-async function panel(){
- const q=(n,o,asc)=>SB.from(n).select("*").order(o,{ascending:!!asc});
- const [s,f,fi,an,sc,rp,rq]=await Promise.all([q("subjects","position",1),q("folders","position",1),q("files","created_at"),q("announcements","created_at"),q("schedule","position",1),q("reports","created_at"),q("requests","created_at")]);
- const SCH=[...(sc.data||[])].sort((p,q)=>((p.dow+1)%7)-((q.dow+1)%7)||p.start_h-q.start_h),S=s.data||[],F=f.data||[],FI=fi.data||[],dls=FI.reduce((a,x)=>a+x.downloads,0),topf=[...FI].sort((a,b)=>b.downloads-a.downloads).slice(0,5).filter(x=>x.downloads>0);
- const fo=F.map(x=>`<option value="${x.id}">${esc((S.find(y=>y.id===x.subject_id)||{}).name_ar)} / ${esc(x.name_ar)}</option>`).join("");
- const DN=["الأحد","الإثنين","الثلاثاء","الأربعاء","الخميس","الجمعة","السبت"],HO=[...Array(16)].map((_,i)=>`<option value="${i+7}">${i+7}:00</option>`).join("");
- const so=S.map(x=>`<option value="${x.id}">${esc(x.name_ar)}</option>`).join("");
- const ud=(tb,id,pid)=>`<button class="sm" onclick="mv('${tb}','${id}',-1,'${pid||""}')">▲</button><button class="sm" onclick="mv('${tb}','${id}',1,'${pid||""}')">▼</button>`;
- app.innerHTML=`<header><h1><img class="lg" src="../logo.png" alt="PPIS">لوحة الأدمن</h1><button onclick="SB.auth.signOut().then(()=>loginForm())">خروج</button></header>
-<div class="sg"><div><b>${S.length}</b>مواد</div><div><b>${FI.length}</b>ملفات</div><div><b>${dls}</b>تحميلات</div></div>
-${topf.length?`<h2>🔥 الأكثر تحميلاً</h2>${topf.map(x=>`<div class="raised row"><span class="n">📄 ${esc(x.name)}</span><b>⬇ ${x.downloads}</b></div>`).join("")}`:""}
-<h2>📤 رفع ملفات</h2><div class="raised card"><select id="uf">${fo}</select><div class="dz" id="dz">⬆️ اسحب الملفات هنا أو اضغط للاختيار</div><input id="uff" type="file" multiple hidden><div id="ups"></div></div>
-<h2>المواد والفولدرات</h2>${S.map(x=>`<div class="raised card" style="margin:10px 0"><div class="row" style="padding:0;margin:0"><b class="n">${esc(x.icon)} ${esc(x.name_ar)} / ${esc(x.name_en)}</b>${ud("subjects",x.id)}<select class="sel" onchange="setTh('${x.id}',this.value)" aria-label="animation">${[["none","بدون أنيميشن"],["politics","🏛️ سياسية"],["finance","📈 مالية"],["it","💻 IT"]].map(o=>`<option value="${o[0]}" ${x.theme===o[0]?"selected":""}>${o[1]}</option>`).join("")}</select><button class="sm" onclick="ren('subjects','${x.id}')">✎</button><button class="x sm" onclick="del('subjects','${x.id}')">🗑</button></div>
-${F.filter(y=>y.subject_id===x.id).map(y=>`<div class="row"><span class="n">${esc(y.icon)} ${esc(y.name_ar)} / ${esc(y.name_en)} <span class="mu">(${FI.filter(z=>z.folder_id===y.id).length})</span></span>${ud("folders",y.id,x.id)}<button class="sm" onclick="ren('folders','${y.id}')">✎</button><button class="x sm" onclick="del('folders','${y.id}')">🗑</button></div>`).join("")}</div>`).join("")}
-<div class="raised card"><b>إضافة مادة</b><input id="sa" placeholder="الاسم بالعربي"><input id="se" placeholder="الاسم بالإنجليزي"><input id="si" placeholder="إيموجي (اختياري)" maxlength="4"><button class="p" onclick="addS()">إضافة (مع 4 فولدرات جاهزة)</button></div>
-<div class="raised card" style="margin-top:12px"><b>إضافة فولدر</b><select id="fs">${so}</select><input id="fa" placeholder="الاسم بالعربي"><input id="fe" placeholder="الاسم بالإنجليزي"><button class="p" onclick="addF()">إضافة</button></div>
-<div class="raised card" style="margin-top:12px"><b>نشر إعلان</b><input id="aa" placeholder="النص بالعربي"><input id="ae" placeholder="النص بالإنجليزي"><button class="p" onclick="addA()">نشر</button></div>
-<div class="raised card" style="margin-top:12px"><b>إضافة حصة للجدول</b><select id="cdw">${[6,0,1,2,3,4,5].map(d=>`<option value="${d}">${DN[d]}</option>`).join("")}</select><div style="display:flex;gap:8px"><select id="cst">${HO}</select><select id="cen">${HO}</select></div><select id="ck"><option value="lecture">محاضرة</option><option value="section">سكشن</option><option value="lab">معمل</option><option value="elective">اختياري</option></select><input id="cs" placeholder="المادة بالإنجليزي"><input id="csa" placeholder="المادة بالعربي"><input id="cl" placeholder="المحاضر (اختياري)"><input id="cp" placeholder="المكان"><button class="p" onclick="addC()">إضافة</button></div>
-<h2>الملفات</h2>${FI.slice().reverse().map(x=>`<div class="raised row"><span class="n">📄 ${esc(x.name)} <span class="mu">⬇ ${x.downloads}</span></span><button class="x sm" onclick="delFile('${x.id}','${esc(x.path)}')">🗑</button></div>`).join("")||`<p class="mu">لا يوجد</p>`}
-<h2>الإعلانات</h2>${(an.data||[]).map(x=>`<div class="raised row"><span class="n">${esc(x.text_ar)}</span><button class="x sm" onclick="del('announcements','${x.id}')">🗑</button></div>`).join("")}
-<h2>الجدول</h2>${SCH.map(x=>`<div class="raised row"><span class="n">${DN[x.dow]} ${x.start_h}–${x.end_h} · ${esc(x.subject_ar||x.subject)} <span class="mu">(${esc(x.place)})</span></span><button class="x sm" onclick="del('schedule','${x.id}')">🗑</button></div>`).join("")}
-<h2>البلاغات</h2>${(rp.data||[]).map(x=>`<div class="raised row"><span class="n">${esc((FI.find(y=>y.id===x.file_id)||{name:"?"}).name)}: ${esc(x.message)}</span><button class="x sm" onclick="del('reports','${x.id}')">🗑</button></div>`).join("")||`<p class="mu">لا يوجد</p>`}
-<h2>طلبات الملفات</h2>${(rq.data||[]).map(x=>`<div class="raised row"><span class="n">${esc(x.message)}</span><button class="x sm" onclick="del('requests','${x.id}')">🗑</button></div>`).join("")||`<p class="mu">لا يوجد</p>`}`;
- const dz=$("dz"),inp=$("uff");dz.onclick=()=>inp.click();inp.onchange=()=>{up([...inp.files]);inp.value=""};
- ["dragenter","dragover"].forEach(n=>dz.addEventListener(n,e=>{e.preventDefault();dz.classList.add("on")}));
- ["dragleave","drop"].forEach(n=>dz.addEventListener(n,e=>{e.preventDefault();dz.classList.remove("on")}));
- dz.addEventListener("drop",e=>up([...e.dataTransfer.files]))}
+ const {data}=await SB.auth.getSession();if(data.session){const a=await SB.rpc("is_admin");if(a.data)return start()}loginForm()}
+async function start(){await load();render()}
+async function load(){const q=(n,o,a)=>SB.from(n).select("*").order(o,{ascending:!!a});
+ const r=await Promise.all([q("subjects","position",1),q("folders","position",1),q("files","created_at"),q("announcements","created_at"),q("schedule","position",1),q("reports","created_at"),q("requests","created_at")]);
+ D={S:r[0].data||[],F:r[1].data||[],FI:r[2].data||[],AN:r[3].data||[],SC:r[4].data||[],RP:r[5].data||[],RQ:r[6].data||[]}}
+async function refresh(){await load();render()}
+/* ---------- helpers ---------- */
+const subj=id=>D.S.find(x=>x.id===id),fold=id=>D.F.find(x=>x.id===id);
+const nF=sid=>D.F.filter(x=>x.subject_id===sid).length,nFI=sid=>D.FI.filter(f=>{const o=fold(f.folder_id);return o&&o.subject_id===sid}).length;
+const thName=v=>(TH.find(x=>x[0]===v)||TH[0])[1];
+function shut(){$("sh").classList.remove("on");setTimeout(()=>{if(!$("sh").classList.contains("on"))$("sh").innerHTML=""},300)}
+function form(title,fields,cb,okLabel){$("sh").innerHTML=`<div class="bk" onclick="shut()"></div><div class="pn form"><div class="hd"></div><h3>${title}</h3>${fields.map(f=>`<label class="fl">${f.l}</label>${f.t==="select"?`<select id="f_${f.k}">${f.o.map(o=>`<option value="${o[0]}" ${String(o[0])===String(f.v)?"selected":""}>${o[1]}</option>`).join("")}</select>`:`<input id="f_${f.k}" value="${esc(f.v)}" placeholder="${esc(f.ph)}">`}`).join("")}<div class="acts"><button onclick="shut()">إلغاء</button><button class="p" id="fok">${okLabel||"حفظ"}</button></div></div>`;
+ $("fok").onclick=async()=>{const o={};fields.forEach(f=>o[f.k]=$("f_"+f.k).value.trim());$("fok").disabled=true;const r=await cb(o);if(r===false){$("fok").disabled=false;return}shut()};requestAnimationFrame(()=>$("sh").classList.add("on"))}
+async function mv(tb,id,d,pid){let q=SB.from(tb).select("id").order("position");if(tb==="folders")q=q.eq("subject_id",pid);const {data}=await q;const ids=data.map(x=>x.id),i=ids.indexOf(id),j=i+d;if(j<0||j>=ids.length)return;[ids[i],ids[j]]=[ids[j],ids[i]];
+ await Promise.all(ids.map((x,k)=>SB.from(tb).update({position:k+1}).eq("id",x)));refresh()}
+/* ---------- pages ---------- */
+function shell(title,body,o){o=o||{};const r=route()[0]||"";
+ const nv=(h,i,l,b)=>`<a href="#/${h}" class="${r===h?"on":""}"><i>${i}${b?`<em class="bdg">${b}</em>`:""}</i><span>${l}</span></a>`;
+ return`<header>${o.back?`<button class="ib" onclick="location.hash='${o.back}'" aria-label="back">→</button>`:`<img class="lg" src="../logo.png" alt="PPIS" style="margin:0">`}<h1>${title}</h1>${o.act||""}<button class="ib" onclick="SB.auth.signOut().then(()=>loginForm())" title="خروج">⏻</button></header>${body}
+<nav class="bn">${nv("","🏠","الرئيسية")}${nv("content","📚","المحتوى")}${nv("sched","📅","الجدول")}${nv("ann","📢","الإعلانات")}${nv("inbox","📥","الرسائل",D.RP.length+D.RQ.length||"")}</nav>${o.fab||""}`}
+function home(){const dls=D.FI.reduce((a,x)=>a+x.downloads,0),top=[...D.FI].sort((a,b)=>b.downloads-a.downloads).slice(0,5).filter(x=>x.downloads>0),last=[...D.FI].reverse().slice(0,5),msgs=D.RP.length+D.RQ.length;
+ return shell("لوحة التحكم",`<div class="sg"><div><b>${D.S.length}</b>مواد</div><div><b>${D.FI.length}</b>ملفات</div><div><b>${dls}</b>تحميلات</div></div>
+${msgs?`<a class="warn" href="#/inbox">📥 عندك <b>${msgs}</b> رسالة/بلاغ محتاجين مراجعة ›</a>`:""}
+<h2>إجراءات سريعة</h2><div class="qa"><button class="p" onclick="pickUpload()"><span>📤</span>رفع ملفات</button><button onclick="addSubject()"><span>📚</span>مادة جديدة</button><button onclick="annForm()"><span>📢</span>إعلان جديد</button><button onclick="schForm()"><span>📅</span>حصة جديدة</button></div>
+${last.length?`<h2>آخر المرفوعات</h2>${last.map(x=>fileRowMini(x)).join("")}`:""}
+${top.length?`<h2>🔥 الأكثر تحميلاً</h2>${top.map(x=>`<div class="raised row"><span class="n">${grp(x.name)} ${esc(x.name)}</span><b>⬇ ${x.downloads}</b></div>`).join("")}`:""}`)}
+function fileRowMini(x){const f=fold(x.folder_id);return`<a class="raised row" href="#/content/f/${x.folder_id}" style="color:inherit;text-decoration:none"><span class="ic">${grp(x.name)}</span><div class="n"><b>${esc(x.name)}</b><div class="mu">${f?esc((subj(f.subject_id)||{}).name_ar)+" › "+esc(f.name_ar):""}</div></div></a>`}
+function content(){return shell("المحتوى",D.S.map(s=>`<div class="raised row tap" onclick="location.hash='#/content/s/${s.id}'"><span class="ic">${esc(s.icon)}</span><div class="n"><b>${esc(s.name_ar)}</b><div class="mu">${esc(s.name_en)} · ${nF(s.id)} فولدر · ${nFI(s.id)} ملف${s.theme!=="none"?" · "+thName(s.theme):""}</div></div><span class="sg2" onclick="event.stopPropagation()"><button class="sm" onclick="mv('subjects','${s.id}',-1)">▲</button><button class="sm" onclick="mv('subjects','${s.id}',1)">▼</button></span></div>`).join("")||`<p class="mu">مفيش مواد لسه. اضغط ＋ مادة.</p>`,{fab:`<button class="fab" onclick="addSubject()">＋ مادة</button>`})}
+function subject(id){const s=subj(id);if(!s)return content();
+ return shell(`${esc(s.icon)} ${esc(s.name_ar)}`,`<div class="raised card"><div class="mu">${esc(s.name_en)}</div><label class="fl">الأنيميشن</label><select onchange="setTh('${id}',this.value)">${TH.map(o=>`<option value="${o[0]}" ${s.theme===o[0]?"selected":""}>${o[1]}</option>`).join("")}</select>
+<div class="acts"><button onclick="editSubject('${id}')">✎ تعديل الاسم</button><button class="x" onclick="delSubject('${id}')">🗑 حذف المادة</button></div></div>
+<h2>الفولدرات</h2>${D.F.filter(f=>f.subject_id===id).map(f=>`<div class="raised row tap" onclick="location.hash='#/content/f/${f.id}'"><span class="ic">${esc(f.icon)}</span><div class="n"><b>${esc(f.name_ar)}</b><div class="mu">${esc(f.name_en)} · ${D.FI.filter(x=>x.folder_id===f.id).length} ملف</div></div><span class="sg2" onclick="event.stopPropagation()"><button class="sm" onclick="mv('folders','${f.id}',-1,'${id}')">▲</button><button class="sm" onclick="mv('folders','${f.id}',1,'${id}')">▼</button><button class="sm" onclick="editFolder('${f.id}')">✎</button><button class="x sm" onclick="delFolder('${f.id}')">🗑</button></span></div>`).join("")||`<p class="mu">مفيش فولدرات.</p>`}`,{back:"#/content",fab:`<button class="fab" onclick="addFolder('${id}')">＋ فولدر</button>`})}
+function folder(id){const f=fold(id);if(!f)return content();const s=subj(f.subject_id)||{},fs=D.FI.filter(x=>x.folder_id===id).reverse();
+ return shell(`${esc(f.icon)} ${esc(f.name_ar)}`,`<p class="crumb"><a href="#/content/s/${f.subject_id}">${esc(s.name_ar)}</a> › ${esc(f.name_ar)}</p>
+<div class="dz" id="dz">⬆️ اسحب الملفات هنا أو اضغط للاختيار</div><input id="uff" type="file" multiple hidden><div id="ups"></div>
+<h2>الملفات (${fs.length})</h2>${fs.map(x=>`<div class="raised row"><span class="ic">${grp(x.name)}</span><div class="n"><b>${esc(x.name)}</b><div class="mu">${size(x.size)} · ${x.created_at.slice(0,10)} · ⬇ ${x.downloads}</div></div><button class="sm" onclick="renFile('${x.id}')">✎</button><button class="x sm" onclick="delFile('${x.id}')">🗑</button></div>`).join("")||`<p class="mu">الفولدر فاضي. ارفع أول ملف.</p>`}`,{back:"#/content/s/"+f.subject_id})}
+function sched(){const g=[6,0,1,2,3,4,5].map(d=>{const it=D.SC.filter(x=>x.dow===d).sort((a,b)=>a.start_h-b.start_h);return it.length?`<h2>${DN[d]}</h2>`+it.map(x=>`<div class="raised row"><div class="ct" style="min-width:74px;font-weight:600">${x.start_h}:00<br><span class="mu">${x.end_h}:00</span></div><div class="n"><b>${esc(x.subject_ar||x.subject)}</b> <span class="bd k-${x.kind}">${KN[x.kind]}</span><div class="mu">${[x.lecturer,x.place].filter(Boolean).map(esc).join(" · ")}</div></div><button class="sm" onclick="schForm('${x.id}')">✎</button><button class="x sm" onclick="del('schedule','${x.id}')">🗑</button></div>`).join(""):""}).join("");
+ return shell("الجدول",g||`<p class="mu">الجدول فاضي.</p>`,{fab:`<button class="fab" onclick="schForm()">＋ حصة</button>`})}
+function ann(){return shell("الإعلانات",[...D.AN].reverse().map(x=>`<div class="raised row"><div class="n"><b>${esc(x.text_ar)}</b><div class="mu">${esc(x.text_en)} · ${x.created_at.slice(0,10)}</div></div><button class="sm" onclick="annForm('${x.id}')">✎</button><button class="x sm" onclick="del('announcements','${x.id}')">🗑</button></div>`).join("")||`<p class="mu">مفيش إعلانات.</p>`,{fab:`<button class="fab" onclick="annForm()">＋ إعلان</button>`})}
+function inbox(){const L=ib==="rp"?D.RP:D.RQ;
+ return shell("الرسائل",`<div class="chips"><button class="chip" aria-pressed="${ib==="rp"}" onclick="ib='rp';render()">⚠️ بلاغات (${D.RP.length})</button><button class="chip" aria-pressed="${ib==="rq"}" onclick="ib='rq';render()">✉️ طلبات ملفات (${D.RQ.length})</button></div>`+
+ ([...L].reverse().map(x=>`<div class="raised row"><div class="n">${ib==="rp"?`<b>${esc((D.FI.find(y=>y.id===x.file_id)||{name:"ملف محذوف"}).name)}</b><div>${esc(x.message)}</div>`:`<div>${esc(x.message)}</div>`}<div class="mu">${x.created_at.slice(0,10)}</div></div><button class="sm" onclick="del('${ib==="rp"?"reports":"requests"}','${x.id}')">✅ تم</button></div>`).join("")||`<p class="mu">مفيش حاجة هنا 🎉</p>`))}
+const route=()=>location.hash.replace(/^#\/?/,"").split("/");
+function render(){const r=route();let h;
+ if(r[0]==="content")h=r[1]==="s"?subject(r[2]):r[1]==="f"?folder(r[2]):content();else if(r[0]==="sched")h=sched();else if(r[0]==="ann")h=ann();else if(r[0]==="inbox")h=inbox();else h=home();
+ app.innerHTML=h;if(r[0]==="content"&&r[1]==="f")setupDz(r[2]);scrollTo(0,0)}
+addEventListener("hashchange",()=>{if(D.S.length||D.F.length||D.SC.length||$("app").querySelector(".bn"))render()});
+/* ---------- actions ---------- */
+function pickUpload(){const o=D.F.map(f=>[f.id,(subj(f.subject_id)||{}).name_ar+" › "+f.name_ar]);if(!o.length)return toast("أضف مادة الأول");form("رفع ملفات",[{k:"f",l:"اختار الفولدر",t:"select",o}],async v=>{location.hash="#/content/f/"+v.f},"فتح الفولدر")}
+function addSubject(){form("مادة جديدة",[{k:"ar",l:"الاسم بالعربي",ph:"مثال: المالية العامة"},{k:"en",l:"الاسم بالإنجليزي",ph:"Public Finance"},{k:"ic",l:"إيموجي (اختياري)",ph:"📚"},{k:"th",l:"الأنيميشن",t:"select",o:TH},{k:"mk",l:"إنشاء الفولدرات الأربعة الجاهزة؟",t:"select",o:[["1","أيوه"],["0","لأ"]]}],async o=>{if(!o.ar){toast("اكتب الاسم");return false}
+ const {data,error}=await SB.from("subjects").insert({name_ar:o.ar,name_en:o.en||o.ar,icon:o.ic||"📚",theme:o.th,position:Date.now()%100000000}).select().single();if(error){toast(error.message);return false}
+ if(o.mk==="1")await SB.from("folders").insert(FOL.map((y,i)=>({subject_id:data.id,name_ar:y[0],name_en:y[1],icon:y[2],position:i+1})));await refresh();location.hash="#/content/s/"+data.id})}
+function editSubject(id){const s=subj(id);form("تعديل المادة",[{k:"ar",l:"الاسم بالعربي",v:s.name_ar},{k:"en",l:"الاسم بالإنجليزي",v:s.name_en},{k:"ic",l:"إيموجي",v:s.icon}],async o=>{if(!o.ar)return false;if(await ok(SB.from("subjects").update({name_ar:o.ar,name_en:o.en||o.ar,icon:o.ic||s.icon}).eq("id",id)))refresh()})}
+async function setTh(id,v){if(await ok(SB.from("subjects").update({theme:v}).eq("id",id))){toast("تم تغيير الأنيميشن");await load()}}
+async function purge(fids){if(!fids.length)return;const fl=(await SB.from("files").select("path").in("folder_id",fids)).data||[];if(fl.length)await SB.storage.from("files").remove(fl.map(x=>x.path))}
+async function delSubject(id){const s=subj(id);if(!confirm(`حذف مادة "${s.name_ar}" بكل فولدراتها وملفاتها؟ مفيش رجوع.`))return;await purge(D.F.filter(f=>f.subject_id===id).map(f=>f.id));if(await ok(SB.from("subjects").delete().eq("id",id))){await load();location.hash="#/content";render()}}
+function addFolder(sid){form("فولدر جديد",[{k:"ar",l:"الاسم بالعربي"},{k:"en",l:"الاسم بالإنجليزي"},{k:"ic",l:"إيموجي (اختياري)",ph:"📁"}],async o=>{if(!o.ar)return false;if(await ok(SB.from("folders").insert({subject_id:sid,name_ar:o.ar,name_en:o.en||o.ar,icon:o.ic||"📁",position:Date.now()%100000000})))refresh()})}
+function editFolder(id){const f=fold(id);form("تعديل الفولدر",[{k:"ar",l:"الاسم بالعربي",v:f.name_ar},{k:"en",l:"الاسم بالإنجليزي",v:f.name_en},{k:"ic",l:"إيموجي",v:f.icon}],async o=>{if(!o.ar)return false;if(await ok(SB.from("folders").update({name_ar:o.ar,name_en:o.en||o.ar,icon:o.ic||f.icon}).eq("id",id)))refresh()})}
+async function delFolder(id){const f=fold(id);if(!confirm(`حذف فولدر "${f.name_ar}" بكل ملفاته؟`))return;await purge([id]);if(await ok(SB.from("folders").delete().eq("id",id)))refresh()}
+function renFile(id){const x=D.FI.find(y=>y.id===id);form("تعديل اسم الملف",[{k:"n",l:"اسم الملف",v:x.name}],async o=>{if(!o.n)return false;if(await ok(SB.from("files").update({name:o.n}).eq("id",id)))refresh()})}
+async function delFile(id){const x=D.FI.find(y=>y.id===id);if(!confirm(`حذف "${x.name}"؟`))return;await SB.storage.from("files").remove([x.path]);if(await ok(SB.from("files").delete().eq("id",id)))refresh()}
+async function del(tb,id){if(tb!=="reports"&&tb!=="requests"&&!confirm("متأكد من الحذف؟"))return;if(await ok(SB.from(tb).delete().eq("id",id)))refresh()}
+function annForm(id){const x=id&&D.AN.find(y=>y.id===id);form(x?"تعديل الإعلان":"إعلان جديد",[{k:"ar",l:"النص بالعربي",v:x&&x.text_ar},{k:"en",l:"النص بالإنجليزي",v:x&&x.text_en}],async o=>{if(!o.ar)return false;const b={text_ar:o.ar,text_en:o.en||o.ar};if(await ok(x?SB.from("announcements").update(b).eq("id",id):SB.from("announcements").insert(b)))refresh()})}
+function schForm(id){const x=id&&D.SC.find(y=>y.id===id);form(x?"تعديل الحصة":"حصة جديدة",[{k:"d",l:"اليوم",t:"select",o:[6,0,1,2,3,4,5].map(d=>[d,DN[d]]),v:x?x.dow:6},{k:"s",l:"من الساعة",t:"select",o:HO,v:x?x.start_h:8},{k:"e",l:"إلى الساعة",t:"select",o:HO,v:x?x.end_h:10},{k:"k",l:"النوع",t:"select",o:Object.entries(KN),v:x?x.kind:"lecture"},{k:"en",l:"المادة بالإنجليزي",v:x&&x.subject},{k:"ar",l:"المادة بالعربي",v:x&&x.subject_ar},{k:"l",l:"المحاضر (اختياري)",v:x&&x.lecturer},{k:"p",l:"المكان",v:x&&x.place}],async o=>{const s=+o.s,e=+o.e,d=+o.d;if(!(o.en||o.ar)||e<=s){toast("راجع المادة والوقت");return false}
+ const b={day:["Sunday","Monday","Tuesday","Wednesday","Thursday","Friday","Saturday"][d],time:s+":00-"+e+":00",subject:o.en||o.ar,subject_ar:o.ar,lecturer:o.l,place:o.p,kind:o.k,dow:d,start_h:s,end_h:e};if(!x)b.position=Date.now()%100000000;if(await ok(x?SB.from("schedule").update(b).eq("id",id):SB.from("schedule").insert(b)))refresh()})}
+/* ---------- upload ---------- */
+function setupDz(fid){const dz=$("dz"),inp=$("uff");dz.onclick=()=>inp.click();inp.onchange=()=>{up([...inp.files],fid);inp.value=""};
+ ["dragenter","dragover"].forEach(n=>dz.addEventListener(n,e=>{e.preventDefault();dz.classList.add("on")}));["dragleave","drop"].forEach(n=>dz.addEventListener(n,e=>{e.preventDefault();dz.classList.remove("on")}));dz.addEventListener("drop",e=>up([...e.dataTransfer.files],fid))}
 function up1(f,fid,i){return new Promise(async res=>{const row=$("u"+i),pg=row.querySelector(".pg"),path=crypto.randomUUID()+"-"+f.name.replace(/[^\w.\-]+/g,"_");
  const tok=(await SB.auth.getSession()).data.session.access_token,fd=new FormData();fd.append("cacheControl","3600");fd.append("",f);
  const x=new XMLHttpRequest();x.open("POST",URL_+"/storage/v1/object/files/"+path);x.setRequestHeader("Authorization","Bearer "+tok);x.setRequestHeader("apikey",KEY);
  x.upload.onprogress=e=>{pg.style.width=(e.loaded/e.total*100)+"%"};
  x.onload=async()=>{if(x.status<300){const r=await SB.from("files").insert({folder_id:fid,name:f.name,path,size:f.size});row.querySelector("span").textContent=(r.error?"❌ ":"✅ ")+f.name;res(!r.error)}else{row.querySelector("span").textContent="❌ "+f.name+" ("+x.status+")";res(false)}};
  x.onerror=()=>{row.querySelector("span").textContent="❌ "+f.name;res(false)};x.send(fd)})}
-async function up(fs){const fid=v("uf");if(!fid||!fs.length)return toast("اختار فولدر الأول");
- $("ups").innerHTML=fs.map((f,i)=>`<div class="upr" id="u${i}"><span>⏳ ${esc(f.name)}</span><div class="pgw"><div class="pg" style="height:100%;width:0;background:var(--pr);transition:width .15s"></div></div></div>`).join("");
- const r=await Promise.all(fs.map((f,i)=>up1(f,fid,i)));toast("تم رفع "+r.filter(Boolean).length+" من "+fs.length);setTimeout(panel,1200)}
-async function setTh(id,v2){if(await ok(SB.from("subjects").update({theme:v2}).eq("id",id)))toast("تم تغيير الأنيميشن")}
-async function mv(tb,id,d,pid){let q=SB.from(tb).select("id").order("position");if(tb==="folders")q=q.eq("subject_id",pid);const {data}=await q;const ids=data.map(x=>x.id),i=ids.indexOf(id),j=i+d;if(j<0||j>=ids.length)return;[ids[i],ids[j]]=[ids[j],ids[i]];
- await Promise.all(ids.map((x,k)=>SB.from(tb).update({position:k+1}).eq("id",x)));panel()}
-async function addS(){if(!v("sa"))return;const {data,error}=await SB.from("subjects").insert({name_ar:v("sa"),name_en:v("se")||v("sa"),icon:v("si")||"📚",position:Date.now()%100000000}).select().single();if(error)return toast(error.message);
- await SB.from("folders").insert(FOL.map((y,i)=>({subject_id:data.id,name_ar:y[0],name_en:y[1],icon:y[2],position:i+1})));panel()}
-async function addF(){if(!v("fa")||!v("fs"))return;if(await ok(SB.from("folders").insert({subject_id:v("fs"),name_ar:v("fa"),name_en:v("fe")||v("fa"),position:Date.now()%100000000})))panel()}
-async function addA(){if(!v("aa"))return;if(await ok(SB.from("announcements").insert({text_ar:v("aa"),text_en:v("ae")||v("aa")})))panel()}
-async function addC(){const st=+v("cst"),en=+v("cen"),d=+v("cdw");if(!v("cs")||en<=st)return toast("راجع الوقت والمادة");if(await ok(SB.from("schedule").insert({day:["Sunday","Monday","Tuesday","Wednesday","Thursday","Friday","Saturday"][d],time:st+":00-"+en+":00",subject:v("cs"),subject_ar:v("csa"),lecturer:v("cl"),place:v("cp"),kind:v("ck"),dow:d,start_h:st,end_h:en,position:Date.now()%100000000})))panel()}
-async function ren(tb,id){const {data}=await SB.from(tb).select("*").eq("id",id).single();const a=prompt("الاسم بالعربي",data.name_ar);if(a===null)return;const e=prompt("الاسم بالإنجليزي",data.name_en);if(await ok(SB.from(tb).update({name_ar:a||data.name_ar,name_en:e||data.name_en}).eq("id",id)))panel()}
-async function del(tb,id){if(!confirm("متأكد من الحذف؟"))return;if(tb==="subjects"||tb==="folders"){const fids=tb==="folders"?[id]:((await SB.from("folders").select("id").eq("subject_id",id)).data||[]).map(x=>x.id);
-  if(fids.length){const fl=(await SB.from("files").select("path").in("folder_id",fids)).data||[];if(fl.length)await SB.storage.from("files").remove(fl.map(x=>x.path))}}
- if(await ok(SB.from(tb).delete().eq("id",id)))panel()}
-async function delFile(id,path){if(!confirm("متأكد من الحذف؟"))return;await SB.storage.from("files").remove([path]);if(await ok(SB.from("files").delete().eq("id",id)))panel()}
+async function up(fs,fid){if(!fs.length)return;$("ups").innerHTML=fs.map((f,i)=>`<div class="upr" id="u${i}"><span>⏳ ${esc(f.name)}</span><div class="pgw"><div class="pg" style="height:100%;width:0;background:var(--pr);transition:width .15s"></div></div></div>`).join("");
+ const r=await Promise.all(fs.map((f,i)=>up1(f,fid,i)));toast("تم رفع "+r.filter(Boolean).length+" من "+fs.length);setTimeout(refresh,900)}
 init();
 </script></body></html>
