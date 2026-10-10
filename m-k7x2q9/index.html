@@ -2,7 +2,7 @@
 <html lang="ar" dir="rtl"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="robots" content="noindex,nofollow"><title>Admin</title><link rel="icon" href="../icon.svg">
-<link rel="stylesheet" href="../style.css">
+<link rel="stylesheet" href="../style.css"><script src="../ui.js" defer></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
 <script>addEventListener("error",e=>{var a=document.getElementById("app");if(a)a.innerHTML="<pre style=\"white-space:pre-wrap;padding:16px;color:#c0392b\">"+String(e.message).replace(/</g,"&lt;")+"</pre>"});</script></head><body><div class="wrap" id="app"></div><div id="toast"></div>
 <script>
@@ -26,7 +26,7 @@ async function panel(){
  const S=s.data||[],F=f.data||[],FI=fi.data||[];
  const fo=F.map(x=>`<option value="${x.id}">${esc((S.find(y=>y.id===x.subject_id)||{}).name_ar)} / ${esc(x.name_ar)}</option>`).join("");
  const so=S.map(x=>`<option value="${x.id}">${esc(x.name_ar)}</option>`).join("");
- app.innerHTML=`<header class="raised"><h1>⚙️ لوحة الأدمن</h1><button onclick="SB.auth.signOut().then(()=>loginForm())">خروج</button></header>
+ app.innerHTML=`<header><h1>⚙️ لوحة الأدمن</h1><button onclick="SB.auth.signOut().then(()=>loginForm())">خروج</button></header>
 <div class="raised card"><b>إضافة مادة</b><input id="sa" placeholder="الاسم بالعربي"><input id="se" placeholder="الاسم بالإنجليزي"><input id="si" placeholder="إيموجي (اختياري)" maxlength="4"><button class="p" onclick="addS()">إضافة (مع 4 فولدرات جاهزة)</button></div>
 <div class="raised card" style="margin-top:14px"><b>إضافة فولدر</b><select id="fs">${so}</select><input id="fa" placeholder="الاسم بالعربي"><input id="fe" placeholder="الاسم بالإنجليزي"><button class="p" onclick="addF()">إضافة</button></div>
 <div class="raised card" style="margin-top:14px"><b>رفع ملفات</b><select id="uf">${fo}</select><input id="ufile" type="file" multiple><button class="p" id="ub" onclick="upl()">رفع</button></div>
