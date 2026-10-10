@@ -94,3 +94,11 @@ h1,h2,h3,.hero h2,.pn h3{font-family:"Source Serif 4","Amiri",Georgia,"Times New
 .stt{flex:none;font-size:.8rem;padding:4px 10px;border-radius:10px;background:var(--prc);color:var(--onprc);font-weight:600}.nw2 .stt{background:var(--ac);color:#012351}
 .k-lecture{background:var(--pr)!important;color:var(--onpr)!important}.k-section{background:var(--ac)!important;color:#012351!important}.k-lab{background:#8e44ad!important;color:#fff!important}.k-elective{background:var(--gd)!important;color:#012351!important}
 h2.tdy{color:var(--ac)}
+.bn a i{position:relative}.bdg{position:absolute;top:-6px;inset-inline-end:2px;background:var(--err);color:#fff;font-size:.65rem;font-style:normal;border-radius:10px;padding:0 5px;min-width:16px;line-height:16px}
+.fab{position:fixed;inset-inline-end:16px;bottom:calc(92px + env(safe-area-inset-bottom,0px));z-index:7;height:56px;padding:0 22px;border-radius:18px;background:var(--pr);color:var(--onpr);box-shadow:0 4px 12px #0005;font-size:1rem}
+.pn.form{text-align:start;max-height:88vh;overflow-y:auto}.fl{display:block;margin:10px 4px 0;font-size:.85rem;color:var(--mu)}
+.pn.form .acts{justify-content:stretch}.pn.form .acts button{flex:1}
+.qa{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;margin:10px 0}.qa button{display:flex;flex-direction:column;align-items:center;gap:4px;padding:16px 8px;min-height:84px;border-radius:20px;font-size:.95rem}.qa span{font-size:1.7rem}
+.tap{cursor:pointer}.sg2{display:flex;gap:6px;margin-inline-start:auto}
+.ahd{display:flex;align-items:center;gap:6px;flex-wrap:wrap}.ahd h1{margin:0}
+.warn{padding:12px 16px;border-radius:16px;background:color-mix(in srgb,var(--gd) 25%,var(--sc));margin:8px 0;display:block;color:inherit;text-decoration:none}
