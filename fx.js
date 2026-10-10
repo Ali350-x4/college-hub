@@ -1,5 +1,5 @@
 (function(){
-var cv=document.createElement("canvas");cv.id="fx";document.body.prepend(cv);var c=cv.getContext("2d"),W=0,H=0,raf=0,cur=null,st={},col="#6750a4",last=0,rm=matchMedia("(prefers-reduced-motion:reduce)");
+var cv=document.createElement("canvas");cv.id="fx";document.body.prepend(cv);var c=cv.getContext("2d"),W=0,H=0,raf=0,cur=null,run=null,st={},col="#6750a4",last=0,rm=matchMedia("(prefers-reduced-motion:reduce)");
 function size(){var d=Math.min(devicePixelRatio||1,1.5);cv.width=innerWidth*d;cv.height=innerHeight*d;c.setTransform(d,0,0,d,0,0);W=innerWidth;H=innerHeight}
 var R=Math.random,CH="01{}<>/=;+*#$&ABCDEF";
 var TH={
@@ -25,11 +25,11 @@ var TH={
    c.globalAlpha=.2;st.e.forEach(function(o){o.y-=o.v;if(o.y<-40){o.y=H+40;o.x=R()*W}c.font=o.z+"px sans-serif";c.fillText(o.ch,o.x,o.y)});c.globalAlpha=1}}
 };
 function nc(){var o=st.p,cl=o+(R()-.5)*H*.035+(H*.5-o)*.01-H*.0012,h=Math.min(o,cl)-R()*H*.012,l=Math.max(o,cl)+R()*H*.012;cl=Math.max(H*.2,Math.min(H*.8,cl));st.p=cl;return{o:o,c:cl,h:h,l:l}}
-function loop(t){raf=requestAnimationFrame(loop);if(t-last<33)return;last=t;TH[cur].draw(t)}
-function stop(){cancelAnimationFrame(raf);c.clearRect(0,0,W,H)}
+function loop(t){if(!run)return;raf=requestAnimationFrame(loop);if(t-last<33)return;last=t;TH[run].draw(t)}
+function stop(){run=null;cancelAnimationFrame(raf);c.clearRect(0,0,W,H)}
 window.FX={set:function(n){col=getComputedStyle(document.documentElement).getPropertyValue("--pr").trim()||col;
-  if(!n||n==="none"||!TH[n]||rm.matches){if(cur){cur=null;cv.style.opacity=0;document.body.classList.remove("fx");setTimeout(function(){if(!cur)stop()},650)}return}
-  if(n===cur)return;stop();cur=n;size();st={};TH[n].init();cv.style.opacity=1;document.body.classList.add("fx");raf=requestAnimationFrame(loop)}};
+  if(!n||n==="none"||!TH[n]||rm.matches){if(cur){cur=null;cv.style.opacity=0;document.body.classList.remove("fx");setTimeout(function(){if(!cur)stop()},700)}return}
+  if(n===cur)return;stop();cur=n;size();st={};TH[n].init();run=n;cv.style.opacity=1;document.body.classList.add("fx");raf=requestAnimationFrame(loop)}};
 addEventListener("resize",function(){if(cur){var n=cur;cur=null;FX.set(n)}});
 FX.set(window.__th||"none");
 })();
