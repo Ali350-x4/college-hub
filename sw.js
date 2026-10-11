@@ -1,4 +1,4 @@
-const C="hub-v12",SHELL=["./","style.css","ui.js","fx.js","logo.png","icon-192.png","manifest.webmanifest"];
+const C="hub-v13",SHELL=["./","style.css","ui.js","fx.js","logo.png","icon-192.png","manifest.webmanifest"];
 self.addEventListener("install",e=>{e.waitUntil(caches.open(C).then(c=>c.addAll(SHELL)));self.skipWaiting()});
 self.addEventListener("activate",e=>e.waitUntil(clients.claim()));
 self.addEventListener("fetch",e=>{const r=e.request;if(r.method!=="GET")return;const u=new URL(r.url);
