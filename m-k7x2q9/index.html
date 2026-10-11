@@ -1,9 +1,9 @@
 <!DOCTYPE html>
-<html lang="ar" dir="rtl"><head><meta charset="utf-8"><meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' data:; connect-src 'self' https://myjirhvkucbkfjuowewe.supabase.co wss://myjirhvkucbkfjuowewe.supabase.co; manifest-src 'self'; worker-src 'self'; base-uri 'self'; form-action 'none'">
+<html lang="ar" dir="rtl"><head><meta charset="utf-8"><meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' data: blob:; connect-src 'self' https://myjirhvkucbkfjuowewe.supabase.co wss://myjirhvkucbkfjuowewe.supabase.co; manifest-src 'self'; worker-src 'self'; base-uri 'self'; form-action 'none'">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="robots" content="noindex,nofollow"><title>PPIS Admin</title><link rel="icon" href="../logo.png">
-<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link href="https://fonts.googleapis.com/css2?family=Amiri:wght@400;700&family=IBM+Plex+Sans+Arabic:wght@300;400;500;600;700&family=Source+Serif+4:opsz,wght@8..60,500;8..60,700&display=swap" rel="stylesheet"><link rel="stylesheet" href="../style.css?v=11"><script src="../ui.js?v=4" defer></script>
-<script src="../vendor/supabase.js?v=2.45.4"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link href="https://fonts.googleapis.com/css2?family=Amiri:wght@400;700&family=IBM+Plex+Sans+Arabic:wght@300;400;500;600;700&family=Source+Serif+4:opsz,wght@8..60,500;8..60,700&display=swap" rel="stylesheet"><link rel="stylesheet" href="../style.css?v=12"><script src="../ui.js?v=4" defer></script>
+<script src="../vendor/supabase.js?v=2.45.4"></script><script src="../vendor/jszip.min.js?v=3.10.1"></script>
 <script>addEventListener("error",function(e){var b=document.getElementById("errb");if(!b){b=document.createElement("pre");b.id="errb";b.style.cssText="position:fixed;inset-inline:8px;bottom:20px;z-index:99;margin:0;padding:10px 14px;border-radius:12px;background:#b3261e;color:#fff;white-space:pre-wrap;font-size:12px";b.onclick=function(){b.remove()};document.body.appendChild(b)}b.textContent=String(e.message)});</script>
 </head><body><div class="wrap" id="app"></div><div id="toast"></div><div id="sh"></div>
 <script>
@@ -16,7 +16,7 @@ const esc=s=>String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&
 const $=i=>document.getElementById(i),app=$("app");
 const toast=m=>{$("toast").innerHTML="<span>"+esc(m)+"</span>";setTimeout(()=>$("toast").innerHTML="",2800)};
 const ok=async p=>{const r=await p;if(r.error){toast("خطأ: "+r.error.message);return false}return true};
-const grp=n=>{n=n.toLowerCase();return/\.pdf$/.test(n)?"📕":/\.pptx?$/.test(n)?"📙":/\.docx?$/.test(n)?"📘":/\.(mp4|mkv|mov|avi)$/.test(n)?"🎬":/xlsx?$|csv$/.test(n)?"📗":"📄"};
+const grp=n=>{n=n.toLowerCase();return/\.zip$|\.rar$|\.7z$/.test(n)?"🗜️":/\.pdf$/.test(n)?"📕":/\.pptx?$/.test(n)?"📙":/\.docx?$/.test(n)?"📘":/\.(mp4|mkv|mov|avi)$/.test(n)?"🎬":/xlsx?$|csv$/.test(n)?"📗":"📄"};
 const size=b=>b>1048576?(b/1048576).toFixed(1)+" MB":Math.max(1,Math.round(b/1024))+" KB";
 let D={S:[],F:[],FI:[],AN:[],SC:[],RP:[],RQ:[]},ib="rp";
 (function(){const m=localStorage.theme||"system";m!=="system"&&document.documentElement.setAttribute("data-theme",m)})();
@@ -65,7 +65,7 @@ function subject(id){const s=subj(id);if(!s)return content();
 function folder(id){const f=fold(id);if(!f)return content();const s=subj(f.subject_id)||{},fs=D.FI.filter(x=>x.folder_id===id).reverse();
  return shell(`${esc(f.icon)} ${esc(f.name_ar)}`,`<p class="crumb"><a href="#/content/s/${f.subject_id}">${esc(s.name_ar)}</a> › ${esc(f.name_ar)}</p>
 <div class="dz" id="dz">⬆️ اسحب الملفات هنا أو اضغط للاختيار</div><input id="uff" type="file" multiple hidden><div id="ups"></div>
-<h2>الملفات (${fs.length})</h2>${fs.map(x=>`<div class="raised row"><span class="ic">${grp(x.name)}</span><div class="n"><b>${esc(x.name)}</b><div class="mu">${size(x.size)} · ${x.created_at.slice(0,10)} · ⬇ ${x.downloads}</div></div><button class="sm" onclick="renFile('${x.id}')">✎</button><button class="x sm" onclick="delFile('${x.id}')">🗑</button></div>`).join("")||`<p class="mu">الفولدر فاضي. ارفع أول ملف.</p>`}`,{back:"#/content/s/"+f.subject_id})}
+<h2>الملفات (${fs.length})</h2>${fs.map(x=>`<div class="raised row"><span class="ic">${grp(x.name)}</span><div class="n"><b>${esc(x.name)}</b><div class="mu">${size(x.size)} · ${x.created_at.slice(0,10)} · ⬇ ${x.downloads}</div></div>${/\.zip$/i.test(x.name)?`<button class="sm" onclick="zipView('${x.id}')" title="عرض المحتوى">📂</button>`:""}<button class="sm" onclick="renFile('${x.id}')">✎</button><button class="x sm" onclick="delFile('${x.id}')">🗑</button></div>`).join("")||`<p class="mu">الفولدر فاضي. ارفع أول ملف.</p>`}`,{back:"#/content/s/"+f.subject_id})}
 function sched(){const g=[6,0,1,2,3,4,5].map(d=>{const it=D.SC.filter(x=>x.dow===d).sort((a,b)=>a.start_h-b.start_h);return it.length?`<h2>${DN[d]}</h2>`+it.map(x=>`<div class="raised row"><div class="ct" style="min-width:74px;font-weight:600">${x.start_h}:00<br><span class="mu">${x.end_h}:00</span></div><div class="n"><b>${esc(x.subject_ar||x.subject)}</b> <span class="bd k-${x.kind}">${KN[x.kind]}</span><div class="mu">${[x.lecturer,x.place].filter(Boolean).map(esc).join(" · ")}</div></div><button class="sm" onclick="schForm('${x.id}')">✎</button><button class="x sm" onclick="del('schedule','${x.id}')">🗑</button></div>`).join(""):""}).join("");
  return shell("الجدول",g||`<p class="mu">الجدول فاضي.</p>`,{fab:`<button class="fab" onclick="schForm()">＋ حصة</button>`})}
 function ann(){return shell("الإعلانات",[...D.AN].reverse().map(x=>`<div class="raised row"><div class="n"><b>${esc(x.text_ar)}</b><div class="mu">${esc(x.text_en)} · ${x.created_at.slice(0,10)}</div></div><button class="sm" onclick="annForm('${x.id}')">✎</button><button class="x sm" onclick="del('announcements','${x.id}')">🗑</button></div>`).join("")||`<p class="mu">مفيش إعلانات.</p>`,{fab:`<button class="fab" onclick="annForm()">＋ إعلان</button>`})}
@@ -105,6 +105,28 @@ function up1(f,fid,i){return new Promise(async res=>{const row=$("u"+i),pg=row.q
  x.onload=async()=>{if(x.status<300){const r=await SB.from("files").insert({folder_id:fid,name:f.name,path,size:f.size});row.querySelector("span").textContent=(r.error?"❌ ":"✅ ")+f.name;res(!r.error)}else{let m="";try{m=JSON.parse(x.responseText).message||""}catch(e){}row.querySelector("span").textContent="❌ "+f.name+" ("+x.status+(m?": "+m:"")+")";res(false)}};
  x.onerror=()=>{row.querySelector("span").textContent="❌ "+f.name;res(false)};x.send(fd)})}
 async function up(fs,fid){if(!fs.length)return;$("ups").innerHTML=fs.map((f,i)=>`<div class="upr" id="u${i}"><span>⏳ ${esc(f.name)}</span><div class="pgw"><div class="pg" style="height:100%;width:0;background:var(--pr);transition:width .15s"></div></div></div>`).join("");
- const r=await Promise.all(fs.map((f,i)=>up1(f,fid,i)));toast("تم رفع "+r.filter(Boolean).length+" من "+fs.length);setTimeout(refresh,900)}
+ let k=0,n=0;const w=async()=>{while(k<fs.length){const i=k++;if(await up1(fs[i],fid,i))n++}};await Promise.all([w(),w(),w(),w()]);toast("تم رفع "+n+" من "+fs.length);setTimeout(refresh,900)}
+/* ---------- zip viewer ---------- */
+let Z=null,ZL=[],ZF=null;
+const zdec=b=>{b=Uint8Array.from(b);try{return new TextDecoder("utf-8",{fatal:true}).decode(b)}catch(e){try{return new TextDecoder("windows-1256").decode(b)}catch(x){return String.fromCharCode.apply(null,b)}}};
+const zsz=e=>(e._data&&e._data.uncompressedSize)||0;
+const zJunk=n=>/(^|\/)(__MACOSX|\.DS_Store|Thumbs\.db)(\/|$)/i.test(n);
+const zPrevOk=n=>/\.(png|jpe?g|gif|webp|bmp|txt|md|csv|json|xml|log|py|cs|js|ts|java|cpp|c|h|sql|css|html|yml|ini)$/i.test(n);
+function openSheet(h){$("sh").innerHTML=`<div class="bk" onclick="shut()"></div><div class="pn form"><div class="hd"></div>${h}</div>`;requestAnimationFrame(()=>$("sh").classList.add("on"))}
+async function zipView(id){const x=D.FI.find(y=>y.id===id);ZF=x;openSheet(`<h3>📂 ${esc(x.name)}</h3><p class="mu" id="zs">جاري التحميل...</p><div id="zp"></div><div id="zl"></div>`);
+ try{const r=await fetch(SB.storage.from("files").getPublicUrl(x.path).data.publicUrl);if(!r.ok)throw new Error("HTTP "+r.status);Z=await JSZip.loadAsync(await r.blob(),{decodeFileName:zdec});
+  ZL=Object.values(Z.files).filter(e=>!e.dir&&!zJunk(e.name)).sort((p,q)=>p.name.localeCompare(q.name));const tot=ZL.reduce((s,e)=>s+zsz(e),0);
+  $("zs").innerHTML=`${ZL.length} ملف · ${size(tot)} بعد الفك`;
+  $("zl").innerHTML=(ZL.length?`<div class="acts" style="margin:8px 0"><button class="p" onclick="zipExtract()">📤 فك ورفع الملفات في الفولدر ده</button></div>`:"")+ZL.slice(0,300).map((e,i)=>{const p=e.name.split("/"),b=p.pop();return`<div class="raised row"><span class="ic">${grp(b)}</span><div class="n"><b>${esc(b)}</b><div class="mu">${esc(p.join("/"))}${p.length?" · ":""}${size(zsz(e))}</div></div>${zPrevOk(b)?`<button class="sm" onclick="zPrev(${i})">👁</button>`:""}<button class="sm" onclick="zDl(${i})">⬇</button></div>`}).join("")+(ZL.length>300?`<p class="mu">معروض أول 300 ملف من ${ZL.length}.</p>`:"")||`<p class="mu">الملف فاضي.</p>`}
+ catch(e){$("zs").textContent="مقدرتش أفتح الملف: "+e.message}}
+async function zPrev(i){const e=ZL[i],n=e.name.toLowerCase();$("zp").innerHTML="<p class='mu'>...</p>";try{
+ if(/\.(png|jpe?g|gif|webp|bmp)$/.test(n)){const b=await e.async("blob");$("zp").innerHTML=`<img alt="" src="${URL.createObjectURL(b)}" style="max-width:100%;border-radius:12px;margin:8px 0">`}
+ else{const t=await e.async("string");$("zp").innerHTML=`<pre class="raised card" style="white-space:pre-wrap;text-align:start;direction:auto;max-height:240px;overflow:auto;margin:8px 0">${esc(t.slice(0,20000))}</pre>`}
+ $("zp").scrollIntoView({block:"nearest"})}catch(x){$("zp").innerHTML=""; toast("مقدرتش أعرض الملف")}}
+async function zDl(i){const e=ZL[i],b=await e.async("blob"),a=document.createElement("a");a.href=URL.createObjectURL(b);a.download=e.name.split("/").pop();document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(a.href),4000)}
+async function zipExtract(){if(!ZL.length||!ZF)return;const tot=ZL.reduce((s,e)=>s+zsz(e),0);
+ if(ZL.length>300)return toast("الملف فيه أكتر من 300 ملف، كتير للفك مرة واحدة");if(tot>209715200)return toast("حجم الملفات بعد الفك أكبر من 200MB");
+ if(!confirm(`فك ${ZL.length} ملف ورفعهم في نفس الفولدر؟`))return;const fid=ZF.folder_id;shut();toast("جاري فك الضغط...");const fs=[];
+ for(const e of ZL){const b=await e.async("blob");fs.push(new File([b],e.name.split("/").pop(),{type:b.type||"application/octet-stream"}))}await up(fs,fid)}
 init();
 </script></body></html>
