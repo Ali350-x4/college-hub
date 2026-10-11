@@ -2,7 +2,7 @@
 <html lang="ar" dir="rtl"><head><meta charset="utf-8"><meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' data:; connect-src 'self' https://myjirhvkucbkfjuowewe.supabase.co wss://myjirhvkucbkfjuowewe.supabase.co; manifest-src 'self'; worker-src 'self'; base-uri 'self'; form-action 'none'">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="robots" content="noindex,nofollow"><title>PPIS Admin</title><link rel="icon" href="../logo.png">
-<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link href="https://fonts.googleapis.com/css2?family=Amiri:wght@400;700&family=IBM+Plex+Sans+Arabic:wght@300;400;500;600;700&family=Source+Serif+4:opsz,wght@8..60,500;8..60,700&display=swap" rel="stylesheet"><link rel="stylesheet" href="../style.css?v=10"><script src="../ui.js?v=4" defer></script>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link href="https://fonts.googleapis.com/css2?family=Amiri:wght@400;700&family=IBM+Plex+Sans+Arabic:wght@300;400;500;600;700&family=Source+Serif+4:opsz,wght@8..60,500;8..60,700&display=swap" rel="stylesheet"><link rel="stylesheet" href="../style.css?v=11"><script src="../ui.js?v=4" defer></script>
 <script src="../vendor/supabase.js?v=2.45.4"></script>
 <script>addEventListener("error",function(e){var b=document.getElementById("errb");if(!b){b=document.createElement("pre");b.id="errb";b.style.cssText="position:fixed;inset-inline:8px;bottom:20px;z-index:99;margin:0;padding:10px 14px;border-radius:12px;background:#b3261e;color:#fff;white-space:pre-wrap;font-size:12px";b.onclick=function(){b.remove()};document.body.appendChild(b)}b.textContent=String(e.message)});</script>
 </head><body><div class="wrap" id="app"></div><div id="toast"></div><div id="sh"></div>
@@ -21,9 +21,13 @@ const size=b=>b>1048576?(b/1048576).toFixed(1)+" MB":Math.max(1,Math.round(b/102
 let D={S:[],F:[],FI:[],AN:[],SC:[],RP:[],RQ:[]},ib="rp";
 (function(){const m=localStorage.theme||"system";m!=="system"&&document.documentElement.setAttribute("data-theme",m)})();
 /* ---------- login ---------- */
-function loginForm(msg){app.innerHTML=`<div style="text-align:center;margin:40px 0 10px"><img src="../logo.png" alt="PPIS" style="height:110px"></div><h2 style="text-align:center">لوحة الأدمن</h2><div class="raised card"><input id="e" type="email" placeholder="الإيميل" autocomplete="username"><input id="p" type="password" placeholder="الباسورد" autocomplete="current-password"><button class="p" style="width:100%;margin-top:8px" onclick="login($('e').value.trim(),$('p').value)">دخول</button>${msg?`<p class="mu">${esc(msg)}</p>`:""}</div>`}
-async function login(e,p){const {error}=await SB.auth.signInWithPassword({email:e,password:p});if(error)return loginForm("بيانات الدخول غلط");
- const {data}=await SB.rpc("is_admin");if(!data){await SB.auth.signOut();return loginForm("الحساب ده مش أدمن")}start()}
+function loginForm(msg){app.innerHTML=`<div style="text-align:center;margin:40px 0 10px"><img src="../logo.png" alt="PPIS" style="height:110px"></div><h2 style="text-align:center">لوحة الأدمن</h2><div class="raised card"><input id="e" type="text" inputmode="email" placeholder="الإيميل أو اسم المستخدم" autocomplete="username" autocapitalize="none" autocorrect="off" spellcheck="false"><input id="p" type="password" placeholder="الباسورد" autocomplete="current-password" autocapitalize="none" autocorrect="off" spellcheck="false"><button class="p" style="width:100%;margin-top:8px" onclick="login($('e').value.trim(),$('p').value)">دخول</button>${msg?`<p class="mu">${esc(msg)}</p>`:""}</div>`}
+async function login(e,p){e=String(e||"").trim().toLowerCase();if(e&&!e.includes("@"))e+="@collegehub.app";p=String(p||"");
+ if(!e||!p)return loginForm("اكتب الإيميل والباسورد");
+ let r;try{r=await SB.auth.signInWithPassword({email:e,password:p})}catch(x){return loginForm("مشكلة اتصال: "+x.message)}
+ if(r.error)return loginForm((r.error.status===400?"بيانات الدخول غلط":"خطأ من السيرفر")+" ("+r.error.message+")");
+ const a=await SB.rpc("is_admin");if(a.error)return loginForm("فشل التحقق من الصلاحية: "+a.error.message);
+ if(!a.data){await SB.auth.signOut();return loginForm("الحساب ده مش أدمن")}start()}
 async function init(){const h=new URLSearchParams(location.hash.slice(1));
  if(h.get("e")&&h.get("p")){const e=h.get("e"),p=h.get("p");history.replaceState(null,"",location.pathname);return login(e,p)}
  const {data}=await SB.auth.getSession();if(data.session){const a=await SB.rpc("is_admin");if(a.data)return start()}loginForm()}
@@ -95,10 +99,10 @@ function schForm(id){const x=id&&D.SC.find(y=>y.id===id);form(x?"تعديل ال
 function setupDz(fid){const dz=$("dz"),inp=$("uff");dz.onclick=()=>inp.click();inp.onchange=()=>{up([...inp.files],fid);inp.value=""};
  ["dragenter","dragover"].forEach(n=>dz.addEventListener(n,e=>{e.preventDefault();dz.classList.add("on")}));["dragleave","drop"].forEach(n=>dz.addEventListener(n,e=>{e.preventDefault();dz.classList.remove("on")}));dz.addEventListener("drop",e=>up([...e.dataTransfer.files],fid))}
 function up1(f,fid,i){return new Promise(async res=>{const row=$("u"+i),pg=row.querySelector(".pg"),path=crypto.randomUUID()+"-"+f.name.replace(/[^\w.\-]+/g,"_");
- const tok=(await SB.auth.getSession()).data.session.access_token,fd=new FormData();fd.append("cacheControl","3600");fd.append("",f);
+ const ss=(await SB.auth.getSession()).data.session;if(!ss){row.querySelector("span").textContent="❌ "+f.name+" (سجّل دخول تاني)";return res(false)}const tok=ss.access_token,fd=new FormData();fd.append("cacheControl","3600");fd.append("",f);
  const x=new XMLHttpRequest();x.open("POST",URL_+"/storage/v1/object/files/"+path);x.setRequestHeader("Authorization","Bearer "+tok);x.setRequestHeader("apikey",KEY);
  x.upload.onprogress=e=>{pg.style.width=(e.loaded/e.total*100)+"%"};
- x.onload=async()=>{if(x.status<300){const r=await SB.from("files").insert({folder_id:fid,name:f.name,path,size:f.size});row.querySelector("span").textContent=(r.error?"❌ ":"✅ ")+f.name;res(!r.error)}else{row.querySelector("span").textContent="❌ "+f.name+" ("+x.status+")";res(false)}};
+ x.onload=async()=>{if(x.status<300){const r=await SB.from("files").insert({folder_id:fid,name:f.name,path,size:f.size});row.querySelector("span").textContent=(r.error?"❌ ":"✅ ")+f.name;res(!r.error)}else{let m="";try{m=JSON.parse(x.responseText).message||""}catch(e){}row.querySelector("span").textContent="❌ "+f.name+" ("+x.status+(m?": "+m:"")+")";res(false)}};
  x.onerror=()=>{row.querySelector("span").textContent="❌ "+f.name;res(false)};x.send(fd)})}
 async function up(fs,fid){if(!fs.length)return;$("ups").innerHTML=fs.map((f,i)=>`<div class="upr" id="u${i}"><span>⏳ ${esc(f.name)}</span><div class="pgw"><div class="pg" style="height:100%;width:0;background:var(--pr);transition:width .15s"></div></div></div>`).join("");
  const r=await Promise.all(fs.map((f,i)=>up1(f,fid,i)));toast("تم رفع "+r.filter(Boolean).length+" من "+fs.length);setTimeout(refresh,900)}
