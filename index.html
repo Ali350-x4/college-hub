@@ -1,10 +1,10 @@
 <!DOCTYPE html>
-<html lang="ar" dir="rtl"><head><meta charset="utf-8">
+<html lang="ar" dir="rtl"><head><meta charset="utf-8"><meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' data:; connect-src 'self' https://myjirhvkucbkfjuowewe.supabase.co wss://myjirhvkucbkfjuowewe.supabase.co; manifest-src 'self'; worker-src 'self'; base-uri 'self'; form-action 'none'">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>PPIS Hub</title>
 <link rel="manifest" href="manifest.webmanifest"><link rel="icon" href="logo.png"><link rel="apple-touch-icon" href="icon-192.png"><meta name="theme-color" content="#012351">
-<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link href="https://fonts.googleapis.com/css2?family=Amiri:wght@400;700&family=IBM+Plex+Sans+Arabic:wght@300;400;500;600;700&family=Source+Serif+4:opsz,wght@8..60,500;8..60,700&display=swap" rel="stylesheet"><link rel="stylesheet" href="style.css?v=10"><script src="ui.js?v=4" defer></script><script src="fx.js?v=6" defer></script>
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link href="https://fonts.googleapis.com/css2?family=Amiri:wght@400;700&family=IBM+Plex+Sans+Arabic:wght@300;400;500;600;700&family=Source+Serif+4:opsz,wght@8..60,500;8..60,700&display=swap" rel="stylesheet"><link rel="stylesheet" href="style.css?v=11"><script src="ui.js?v=4" defer></script><script src="fx.js?v=6" defer></script>
+<script src="vendor/supabase.js?v=2.45.4"></script>
 <script>addEventListener("error",function(e){var b=document.getElementById("errb");if(!b){b=document.createElement("pre");b.id="errb";b.style.cssText="position:fixed;inset-inline:8px;bottom:90px;z-index:99;margin:0;padding:10px 14px;border-radius:12px;background:#b3261e;color:#fff;white-space:pre-wrap;font-size:12px";b.onclick=function(){b.remove()};document.body.appendChild(b)}b.textContent=String(e.message)});</script>
 </head><body><div class="wrap" id="app"></div><div id="toast"></div><div id="sh"></div><div id="bar"></div><div id="ptr">↻</div>
 <script>
@@ -75,10 +75,10 @@ function home(){const l=tab==="new"?[...db.files].reverse().slice(0,6):[...db.fi
  return`<section class="hero"><div><h2>${t("hello")}</h2><p>${t("hsub")}</p><span class="stat"><b>${db.subs.length}</b> ${t("subs")}</span><span class="stat"><b>${db.files.length}</b> ${t("files")}</span></div><img class="hl" src="logo.png" alt=""></section>
 <div class="raised card dash" id="dash">${dashHTML()}</div>
 ${db.ann.length?`<h2>📢 ${t("ann")}</h2>${db.ann.map(a=>`<div class="raised ann">${esc(nm(a))}</div>`).join("")}`:""}
-<h2>📚 ${t("subs")}</h2><div class="g">${db.subs.map(s=>`<a class="raised card sub" style="--h:${hue(s.id)}" href="#/s/${s.id}"><div class="ic">${s.ic}</div><b>${esc(nm(s))}</b><div class="mu">${cnt(s.id)} ${t("files")}</div></a>`).join("")}</div>
+<h2>📚 ${t("subs")}</h2><div class="g">${db.subs.map(s=>`<a class="raised card sub" style="--h:${hue(s.id)}" href="#/s/${s.id}"><div class="ic">${esc(s.ic)}</div><b>${esc(nm(s))}</b><div class="mu">${cnt(s.id)} ${t("files")}</div></a>`).join("")}</div>
 <div class="chips"><button class="chip" aria-pressed="${tab==="new"}" onclick="setTab('new')">🆕 ${t("latest")}</button><button class="chip" aria-pressed="${tab==="top"}" onclick="setTab('top')">🔥 ${t("top")}</button></div>${l.map(fileRow).join("")||`<p class="mu">${t("empty")}</p>`}`}
 function subj(id){const s=db.subs.find(x=>x.id===id);if(!s)return home();
- return`<p class="crumb"><a href="#/">${t("home")}</a> / ${esc(nm(s))} <button class="ib" onclick="shr('s/${id}')">🔗</button></p><h2>${s.ic} ${esc(nm(s))}</h2><div class="g">${db.fols.filter(f=>f.sid===id).map(f=>`<a class="raised card sub" style="--h:${hue(id)}" href="#/f/${f.id}"><div class="ic">${f.ic||"📁"}</div><b>${esc(nm(f))}</b><div class="mu">${db.files.filter(x=>x.fid===f.id).length} ${t("files")}</div></a>`).join("")}</div>`}
+ return`<p class="crumb"><a href="#/">${t("home")}</a> / ${esc(nm(s))} <button class="ib" onclick="shr('s/${id}')">🔗</button></p><h2>${esc(s.ic)} ${esc(nm(s))}</h2><div class="g">${db.fols.filter(f=>f.sid===id).map(f=>`<a class="raised card sub" style="--h:${hue(id)}" href="#/f/${f.id}"><div class="ic">${esc(f.ic||"📁")}</div><b>${esc(nm(f))}</b><div class="mu">${db.files.filter(x=>x.fid===f.id).length} ${t("files")}</div></a>`).join("")}</div>`}
 function setF(k){flt=k;render()}function setS(k){srt=k;render()}
 function fol(id){const f=db.fols.find(x=>x.id===id);if(!f)return home();const s=db.subs.find(x=>x.id===f.sid);
  let fs=db.files.filter(x=>x.fid===id);const all=fs.length;if(flt!=="all")fs=fs.filter(x=>grp(x.name)===flt);
