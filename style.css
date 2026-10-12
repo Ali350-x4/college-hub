@@ -106,3 +106,8 @@ h2.tdy{color:var(--ac)}
 input.ck{width:22px;height:22px;margin:0;padding:0;flex:none;accent-color:var(--pr)}
 .selbar{position:fixed;inset-inline:12px;bottom:calc(88px + env(safe-area-inset-bottom,0px));z-index:8;display:flex;align-items:center;gap:8px;padding:10px 14px;box-shadow:0 4px 14px #0006;background:var(--sch)}.selbar b{flex:1}
 .stk{position:sticky;bottom:0;background:var(--sc);padding-top:10px}
+.row.dn{opacity:.55}
+.k-exam{background:#c0392b!important;color:#fff!important}.k-quiz{background:#e67e22!important;color:#fff!important}.k-assignment{background:#2980b9!important;color:#fff!important}.k-project{background:#8e44ad!important;color:#fff!important}
+.stt.hot{background:#c0392b;color:#fff}.stt.warn{background:var(--gd);color:#012351}.stt.ok{background:var(--prc);color:var(--onprc)}.stt.dn{background:var(--sch);color:var(--mu)}
+.nb{position:absolute;top:10px;inset-inline-end:10px;margin:0}
+textarea{resize:vertical;min-height:72px}
